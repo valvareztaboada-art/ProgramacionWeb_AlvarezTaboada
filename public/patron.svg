@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="220" height="220" viewBox="0 0 220 220">
+  <defs>
+    <g id="huella">
+      <ellipse cx="0" cy="6" rx="8" ry="7"/>
+      <circle cx="-10" cy="-5" r="3.6"/>
+      <circle cx="-3.5" cy="-11" r="3.6"/>
+      <circle cx="3.5" cy="-11" r="3.6"/>
+      <circle cx="10" cy="-5" r="3.6"/>
+    </g>
+    <g id="hueso">
+      <rect x="-11" y="-3" width="22" height="6" rx="2"/>
+      <circle cx="-12" cy="-3.5" r="4"/>
+      <circle cx="-12" cy="3.5" r="4"/>
+      <circle cx="12" cy="-3.5" r="4"/>
+      <circle cx="12" cy="3.5" r="4"/>
+    </g>
+    <path id="corazon" d="M0 7 C-10 0 -10 -7 -5.5 -8.5 C-2.5 -9.5 0 -7 0 -5 C0 -7 2.5 -9.5 5.5 -8.5 C10 -7 10 0 0 7 Z"/>
+  </defs>
+  <g fill="#f5d3a6">
+    <use href="#huella" transform="translate(40 42) rotate(-20)"/>
+    <use href="#huella" transform="translate(165 135) rotate(25)"/>
+    <use href="#hueso" transform="translate(155 45) rotate(30)"/>
+    <use href="#hueso" transform="translate(55 165) rotate(-35)"/>
+    <use href="#corazon" transform="translate(108 98) rotate(-10)"/>
+    <use href="#corazon" transform="translate(200 205) scale(0.7)"/>
+    <circle cx="100" cy="28" r="3"/>
+    <circle cx="205" cy="85" r="3"/>
+    <circle cx="18" cy="112" r="3"/>
+    <circle cx="125" cy="200" r="3"/>
+    <circle cx="95" cy="150" r="2"/>
+  </g>
+</svg>
