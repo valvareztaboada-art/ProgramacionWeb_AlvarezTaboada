@@ -2,7 +2,7 @@
 // Son async porque simulan una consulta a la base de datos (tardan un poquito).
 // Cuando veamos Supabase, cambia el interior de cada función, pero las páginas quedan igual.
 
-import { usuarios, mascotas, turnos, vacunas, estudios, pagos } from '@/data/mockData'
+import { usuarios, mascotas, especialidades, turnos, vacunas, estudios, pagos } from '@/data/mockData'
 
 // Para la vista del cliente simulamos que está logueada Ana.
 // Con Supabase Auth esto sale de la sesión del usuario.
@@ -70,4 +70,16 @@ export async function obtenerPagos({ emailDuenio } = {}) {
   return pagos
     .filter((p) => !emailDuenio || p.emailDuenio === emailDuenio)
     .map(conDuenio)
+}
+
+export async function obtenerEspecialidades() {
+  await esperar()
+  return especialidades
+}
+
+// Solo devuelve fecha y hora de los turnos tomados (sin datos de otras personas),
+// porque esta información se le manda al navegador para marcar los horarios ocupados.
+export async function obtenerHorariosOcupados() {
+  await esperar()
+  return turnos.map((t) => ({ fecha: t.fecha, hora: t.hora }))
 }

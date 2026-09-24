@@ -26,3 +26,16 @@ export function validarPaciente({ nombre, especie, edad, emailDuenio }) {
 
   return errores
 }
+
+// "hoy" se recibe como parámetro para poder testear la función con cualquier fecha
+export function validarTurno({ mascotaId, especialidad, fecha, hora }, hoy) {
+  const errores = {}
+
+  if (mascotaId === '') errores.mascotaId = 'Elegí para qué mascota es el turno.'
+  if (especialidad === '') errores.especialidad = 'Elegí el tipo de turno.'
+  if (fecha === '') errores.fecha = 'Elegí un día.'
+  else if (fecha < hoy) errores.fecha = 'Elegí un día de hoy en adelante.'
+  if (fecha !== '' && hora === '') errores.hora = 'Elegí un horario.'
+
+  return errores
+}

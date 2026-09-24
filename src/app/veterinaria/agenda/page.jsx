@@ -19,6 +19,7 @@ export default async function Agenda() {
               <th>Hora</th>
               <th>Paciente</th>
               <th>Dueño/a</th>
+              <th>Especialidad</th>
               <th>Motivo</th>
               <th>Estado</th>
             </tr>
@@ -30,6 +31,7 @@ export default async function Agenda() {
                 <td>{t.hora}</td>
                 <td><Link href={`/veterinaria/pacientes/${t.mascotaId}`} className="enlace">{t.mascota}</Link></td>
                 <td>{t.duenio}</td>
+                <td>{t.especialidad}</td>
                 <td>{t.motivo}</td>
                 <td><Badge estado={t.estado} /></td>
               </tr>

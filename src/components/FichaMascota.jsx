@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import Badge from './Badge'
+import { formatearEdad } from '@/lib/formato'
 import { IlustracionMascota } from './ilustraciones/Ilustraciones'
 
 // Ficha completa de una mascota. La usan las dos interfaces:
@@ -13,7 +14,7 @@ function FichaMascota({ mascota, turnos, vacunas, estudios, volver }) {
         <IlustracionMascota especie={mascota.especie} className="ficha-ilustracion" />
         <div>
           <h1>{mascota.nombre}</h1>
-          <p className="texto-suave">{mascota.especie} · {mascota.raza} · {mascota.edad} años</p>
+          <p className="texto-suave">{mascota.especie} · {mascota.raza} · {formatearEdad(mascota.edad)}</p>
           <p>
             Dueño/a: <strong>{mascota.duenio}</strong>
             {mascota.registrado && <span className="texto-suave"> · {mascota.emailDuenio}</span>}
@@ -30,7 +31,7 @@ function FichaMascota({ mascota, turnos, vacunas, estudios, volver }) {
               <li key={t.id} className="card lista-item">
                 <div>
                   <strong>{t.fecha} · {t.hora}</strong>
-                  <p className="texto-suave">{t.motivo}</p>
+                  <p className="texto-suave">{t.especialidad} · {t.motivo}</p>
                 </div>
                 <Badge estado={t.estado} />
               </li>
