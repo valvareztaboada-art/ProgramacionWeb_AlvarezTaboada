@@ -1,9 +1,9 @@
-import { Link } from 'react-router-dom'
-import { PerroCara } from './ilustraciones/Ilustraciones.jsx'
+import Link from 'next/link'
+import { PerroCara } from './ilustraciones/Ilustraciones'
 
 function Logo({ claro = false }) {
   return (
-    <Link to="/" className={`logo ${claro ? 'logo-claro' : ''}`} aria-label="MICAN, ir al inicio">
+    <Link href="/" className={`logo ${claro ? 'logo-claro' : ''}`} aria-label="MICAN, ir al inicio">
       <span className="logo-marca">
         <PerroCara />
       </span>

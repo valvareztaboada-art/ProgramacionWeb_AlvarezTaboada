@@ -15,23 +15,40 @@ Tiene **doble interfaz**:
 - **Tipografías:** Fredoka (títulos) y Nunito (textos), de Google Fonts.
 - **Ilustraciones:** perros y gatos dibujados en SVG (`src/components/ilustraciones`), en estilo de línea a mano alzada.
 
-## Tecnologías (por ahora)
-- React + Vite
-- React Router
+## Tecnologías
+- **Next.js** (App Router) + React
 - CSS puro (variables, flexbox, grid, animaciones, responsive)
 
-## Estructura
+## Cómo está organizado (App Router)
 ```
 src/
-├── components/       # Piezas reutilizables (Navbar, Sidebar, Logo, Icono, ...)
-│   └── ilustraciones/
-├── layouts/          # Layout público y layout de panel
-├── pages/
-│   ├── publico/
-│   ├── cliente/
-│   └── veterinaria/
-└── data/             # Datos de ejemplo (después: Supabase)
+├── app/
+│   ├── layout.jsx          # Layout raíz (tipografías, metadata)
+│   ├── not-found.jsx       # Página 404
+│   ├── (publico)/          # Grupo de rutas: no aparece en la URL
+│   │   ├── layout.jsx      # Navbar + footer
+│   │   ├── page.jsx        # /
+│   │   └── login/          # /login
+│   ├── cliente/            # Interfaz del dueño
+│   │   ├── layout.jsx      # Menú lateral compartido
+│   │   ├── loading.jsx     # Pantalla de carga
+│   │   └── mascotas/[id]/  # Ruta dinámica: ficha de cada mascota
+│   └── veterinaria/        # Interfaz de la veterinaria
+│       └── pacientes/[id]/ # Ruta dinámica: ficha de cada paciente
+├── components/             # Componentes reutilizables
+├── lib/datos.js            # Funciones async para obtener datos (después: Supabase)
+└── data/mockData.js        # Datos de ejemplo
 ```
+
+### Server y Client Components
+Todas las páginas y layouts son **Server Components**: buscan los datos con `async/await`.
+Solo tres componentes chicos (hojas del árbol) llevan `'use client'`, porque necesitan hooks o eventos:
+
+| Componente | Por qué es Client Component |
+|---|---|
+| `EnlaceNav` | Usa `usePathname` para marcar el enlace activo del menú |
+| `FormularioLogin` | Usa `useState`, `onSubmit` y `useRouter` |
+| `TablaPacientes` | Buscador con `useState` y `onChange` |
 
 ## Correr en local
 ```bash

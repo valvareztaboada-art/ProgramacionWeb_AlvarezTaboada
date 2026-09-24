@@ -1,7 +1,10 @@
-import { Link, NavLink } from 'react-router-dom'
-import Logo from './Logo.jsx'
-import Icono from './Icono.jsx'
+import Link from 'next/link'
+import Logo from './Logo'
+import Icono from './Icono'
+import EnlaceNav from './EnlaceNav'
 
+// Server Component. Solo el enlace (EnlaceNav) es Client Component.
+// El ícono se dibuja en el servidor y se le pasa como children.
 function Sidebar({ titulo, menu }) {
   return (
     <aside className="sidebar">
@@ -10,15 +13,15 @@ function Sidebar({ titulo, menu }) {
       <nav>
         <ul>
           {menu.map((item) => (
-            <li key={item.to}>
-              <NavLink to={item.to} end={item.end}>
-                <Icono nombre={item.icon} /> {item.label}
-              </NavLink>
+            <li key={item.href}>
+              <EnlaceNav href={item.href} exacto={item.exacto}>
+                <Icono nombre={item.icono} /> {item.label}
+              </EnlaceNav>
             </li>
           ))}
         </ul>
       </nav>
-      <Link to="/login" className="sidebar-salir">
+      <Link href="/login" className="sidebar-salir">
         <Icono nombre="salir" /> Cerrar sesión
       </Link>
     </aside>
