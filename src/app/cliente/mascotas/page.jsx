@@ -16,7 +16,7 @@ export default async function MisMascotas() {
         {mascotas.map((m) => (
           <Link key={m.id} href={`/cliente/mascotas/${m.id}`} className="card card-mascota">
             <IlustracionMascota especie={m.especie} className="card-mascota-ilustracion" />
-            <h3>{m.nombre}</h3>
+            <h2>{m.nombre}</h2>
             <p className="texto-suave">{m.raza} · {formatearEdad(m.edad)}</p>
           </Link>
         ))}

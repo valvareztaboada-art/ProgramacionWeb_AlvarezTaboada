@@ -33,6 +33,8 @@ function FormularioTurno({ mascotas, especialidades, ocupados }) {
   // obtener días distintos y React mostraría un error de "hydration".
   const [hoy, setHoy] = useState('')
   useEffect(() => {
+    // Acá sí corresponde un efecto: sincroniza con algo externo a React (el reloj del navegador)
+    // oxlint-disable-next-line react/set-state-in-effect
     setHoy(hoyISO())
   }, [])
 

@@ -453,7 +453,138 @@ strong { font-weight: 800; }
   50% { transform: scale(1.05); }
 }
 
+/* ===== Accesibilidad ===== */
+
+/* "Saltar al contenido": oculto arriba hasta que recibe el foco con Tab */
+.saltar-al-contenido {
+  position: absolute;
+  left: 1rem;
+  top: -100px;
+  z-index: 100;
+  background: var(--texto);
+  color: var(--blanco);
+  padding: 0.6rem 1.1rem;
+  border-radius: 999px;
+  font-weight: 800;
+}
+.saltar-al-contenido:focus { top: 1rem; }
+main:focus { outline: none; }
+
+/* Contorno de foco visible y consistente al navegar con teclado */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+summary:focus-visible {
+  outline: 3px solid var(--mostaza);
+  outline-offset: 3px;
+}
+
+/* Si la persona pidió "reducir movimiento" en su sistema, no animamos */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  html { scroll-behavior: smooth; }
+}
+
+/* ===== Portada: cómo funciona y contacto ===== */
+.seccion-color { background: var(--celeste); }
+.seccion-color .seccion { display: flex; flex-direction: column; align-items: flex-start; }
+
+.pasos {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 2rem;
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 1.25rem;
+  counter-reset: paso;
+}
+.paso {
+  position: relative;
+  background: var(--blanco);
+  border: 2px solid var(--borde);
+  border-radius: var(--radio);
+  box-shadow: 4px 4px 0 var(--azul);
+  padding: 1.5rem 1.25rem 1.25rem;
+}
+.paso-numero {
+  position: absolute;
+  top: -14px;
+  right: 16px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--mostaza);
+  display: grid;
+  place-items: center;
+  font-family: var(--fuente-titulos);
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+.paso-icono { display: block; color: var(--azul); margin-bottom: 0.5rem; }
+
+.grid-contacto { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.25rem; }
+.horarios-atencion { display: grid; grid-template-columns: auto 1fr; gap: 0.4rem 1.5rem; margin: 0; }
+.horarios-atencion dt { font-weight: 700; }
+.horarios-atencion dd { margin: 0; }
+address { font-style: normal; line-height: 1.9; }
+
+.card-mascota h2 { font-size: 1.3rem; }
+
+/* Botón del menú (solo se ve en pantallas chicas) */
+.menu-boton {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  border: 2.5px solid var(--azul);
+  border-radius: 50%;
+  background: var(--blanco);
+  color: var(--azul);
+  cursor: pointer;
+}
+
+@keyframes desplegar {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 /* ===== Responsive ===== */
+@media (max-width: 960px) {
+  .navbar { position: relative; }
+  .menu-boton { display: flex; }
+  .navbar-links {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 20;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.25rem;
+    padding: 0.75rem 1rem 1.25rem;
+    background: var(--crema);
+    border-bottom: 2px solid var(--borde);
+    box-shadow: 0 8px 16px rgba(31, 36, 85, 0.08);
+  }
+  .navbar-links.abierto { display: flex; animation: desplegar 0.2s ease-out; }
+  .navbar-links a:not(.btn) { padding: 0.7rem 0.5rem; border-radius: 12px; }
+  .navbar-links a:not(.btn):hover { background: var(--blanco); }
+  .navbar-links .btn { justify-content: center; margin-top: 0.5rem; }
+}
+
 @media (max-width: 860px) {
   .hero-contenido { flex-direction: column-reverse; text-align: center; padding: 2rem 1rem 3rem; }
   .hero-texto h1 { font-size: 2.2rem; }
@@ -464,7 +595,7 @@ strong { font-weight: 800; }
   .hero-gato { width: 132px; }
   .hero-corazon { width: 54px; }
   .navbar { padding: 0.8rem 1rem; }
-  .navbar-links { gap: 1rem; }
+
   .seccion { padding: 2.5rem 1rem; }
 }
 

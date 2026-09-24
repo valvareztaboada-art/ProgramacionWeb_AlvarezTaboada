@@ -10,7 +10,7 @@ function Sidebar({ titulo, menu }) {
     <aside className="sidebar">
       <Logo claro />
       <p className="sidebar-titulo">{titulo}</p>
-      <nav>
+      <nav aria-label="Menú del panel">
         <ul>
           {menu.map((item) => (
             <li key={item.href}>
