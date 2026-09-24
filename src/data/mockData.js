@@ -21,11 +21,18 @@ export const mascotas = [
   { id: 4, nombre: 'Kiwi', especie: 'Ave', raza: 'Cotorra', edad: 1, emailDuenio: 'sofia.diaz@mail.com' },
 ]
 
+export const especialidades = [
+  { id: 'consulta', nombre: 'Consulta', icono: 'estetoscopio', descripcion: 'Control general o algo que te preocupa' },
+  { id: 'vacunacion', nombre: 'Vacunación', icono: 'jeringa', descripcion: 'Vacunas del calendario' },
+  { id: 'estudios', nombre: 'Estudios', icono: 'tubo', descripcion: 'Análisis, radiografías, ecografías' },
+  { id: 'peluqueria', nombre: 'Peluquería', icono: 'tijera', descripcion: 'Baño y corte' },
+]
+
 export const turnos = [
-  { id: 1, mascotaId: 1, fecha: '2026-09-28', hora: '10:00', motivo: 'Control anual', estado: 'Confirmado' },
-  { id: 2, mascotaId: 3, fecha: '2026-09-28', hora: '11:30', motivo: 'Dermatitis', estado: 'Pendiente' },
-  { id: 3, mascotaId: 2, fecha: '2026-09-30', hora: '16:00', motivo: 'Vacunación', estado: 'Confirmado' },
-  { id: 4, mascotaId: 4, fecha: '2026-10-02', hora: '09:00', motivo: 'Revisión de pico', estado: 'Pendiente' },
+  { id: 1, mascotaId: 1, fecha: '2026-09-28', hora: '10:00', especialidad: 'Consulta', motivo: 'Control anual', estado: 'Confirmado' },
+  { id: 2, mascotaId: 3, fecha: '2026-09-28', hora: '11:30', especialidad: 'Consulta', motivo: 'Dermatitis', estado: 'Pendiente' },
+  { id: 3, mascotaId: 2, fecha: '2026-09-30', hora: '16:00', especialidad: 'Vacunación', motivo: 'Triple felina', estado: 'Confirmado' },
+  { id: 4, mascotaId: 4, fecha: '2026-10-02', hora: '09:00', especialidad: 'Consulta', motivo: 'Revisión de pico', estado: 'Pendiente' },
 ]
 
 export const vacunas = [
