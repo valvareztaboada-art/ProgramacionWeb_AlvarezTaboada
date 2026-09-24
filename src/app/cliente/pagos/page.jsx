@@ -5,7 +5,7 @@ import { CLIENTE_ACTUAL, obtenerPagos } from '@/lib/datos'
 export const metadata = { title: 'Pagos' }
 
 export default async function MisPagos() {
-  const pagos = await obtenerPagos({ duenio: CLIENTE_ACTUAL })
+  const pagos = await obtenerPagos({ emailDuenio: CLIENTE_ACTUAL.email })
 
   return (
     <>

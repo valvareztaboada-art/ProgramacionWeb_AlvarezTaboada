@@ -7,10 +7,10 @@ export const metadata = { title: 'Mi cuenta' }
 export default async function ClienteInicio() {
   // Promise.all pide todos los datos al mismo tiempo (en paralelo)
   const [mascotas, turnos, vacunas, pagos] = await Promise.all([
-    obtenerMascotas({ duenio: CLIENTE_ACTUAL }),
-    obtenerTurnos({ duenio: CLIENTE_ACTUAL }),
-    obtenerVacunas({ duenio: CLIENTE_ACTUAL }),
-    obtenerPagos({ duenio: CLIENTE_ACTUAL }),
+    obtenerMascotas({ emailDuenio: CLIENTE_ACTUAL.email }),
+    obtenerTurnos({ emailDuenio: CLIENTE_ACTUAL.email }),
+    obtenerVacunas({ emailDuenio: CLIENTE_ACTUAL.email }),
+    obtenerPagos({ emailDuenio: CLIENTE_ACTUAL.email }),
   ])
 
   const vacunasPendientes = vacunas.filter((v) => !v.aplicada)
@@ -18,7 +18,7 @@ export default async function ClienteInicio() {
 
   return (
     <>
-      <PageHeader titulo={`¡Hola, ${CLIENTE_ACTUAL.split(' ')[0]}!`} descripcion="Este es el resumen de tus mascotas." />
+      <PageHeader titulo={`¡Hola, ${CLIENTE_ACTUAL.nombre.split(' ')[0]}!`} descripcion="Este es el resumen de tus mascotas." />
       <div className="grid-stats">
         <StatCard icono="huella" valor={mascotas.length} label="Mascotas" />
         <StatCard icono="calendario" valor={turnos.length} label="Próximos turnos" />

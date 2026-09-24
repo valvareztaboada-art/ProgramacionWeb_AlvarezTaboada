@@ -6,7 +6,7 @@ import { CLIENTE_ACTUAL, obtenerMascotas } from '@/lib/datos'
 export const metadata = { title: 'Mis mascotas' }
 
 export default async function MisMascotas() {
-  const mascotas = await obtenerMascotas({ duenio: CLIENTE_ACTUAL })
+  const mascotas = await obtenerMascotas({ emailDuenio: CLIENTE_ACTUAL.email })
 
   return (
     <>

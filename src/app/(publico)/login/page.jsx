@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import FormularioLogin from '@/components/FormularioLogin'
 import { PerroCara, GatoCara } from '@/components/ilustraciones/Ilustraciones'
 
@@ -14,6 +15,9 @@ export default function LoginPage() {
         </div>
         <h1>¡Hola de nuevo!</h1>
         <FormularioLogin />
+        <p className="login-alternativa">
+          ¿Primera vez en MICAN? <Link href="/registro" className="enlace">Creá tu cuenta</Link>
+        </p>
       </div>
     </section>
   )
