@@ -1,12 +1,24 @@
 // Datos de ejemplo (mock), organizados como tablas de una base de datos.
-// Los turnos, vacunas y estudios se relacionan con la mascota por "mascotaId".
 // Más adelante esto se reemplaza por tablas en Supabase.
+//
+// Cómo se relacionan:
+// - Cada mascota guarda el EMAIL de su dueño/a (emailDuenio).
+// - La veterinaria puede cargar una mascota aunque el dueño/a todavía no tenga cuenta.
+// - Cuando esa persona se registra con ese email, ve automáticamente sus mascotas.
+// - Turnos, vacunas y estudios se relacionan con la mascota por "mascotaId".
+
+export const usuarios = [
+  { id: 1, nombre: 'Ana Gómez', email: 'ana.gomez@mail.com', rol: 'cliente' },
+  { id: 2, nombre: 'Juan Pérez', email: 'juan.perez@mail.com', rol: 'cliente' },
+  { id: 3, nombre: 'Laura Ríos', email: 'laura@mican.vet', rol: 'veterinaria' },
+]
 
 export const mascotas = [
-  { id: 1, nombre: 'Luna', especie: 'Perro', raza: 'Golden Retriever', edad: 4, duenio: 'Ana Gómez' },
-  { id: 2, nombre: 'Michi', especie: 'Gato', raza: 'Siamés', edad: 2, duenio: 'Ana Gómez' },
-  { id: 3, nombre: 'Rocco', especie: 'Perro', raza: 'Bulldog Francés', edad: 6, duenio: 'Juan Pérez' },
-  { id: 4, nombre: 'Kiwi', especie: 'Ave', raza: 'Cotorra', edad: 1, duenio: 'Sofía Díaz' },
+  { id: 1, nombre: 'Luna', especie: 'Perro', raza: 'Golden Retriever', edad: 4, emailDuenio: 'ana.gomez@mail.com' },
+  { id: 2, nombre: 'Michi', especie: 'Gato', raza: 'Siamés', edad: 2, emailDuenio: 'ana.gomez@mail.com' },
+  { id: 3, nombre: 'Rocco', especie: 'Perro', raza: 'Bulldog Francés', edad: 6, emailDuenio: 'juan.perez@mail.com' },
+  // Kiwi fue cargada por la veterinaria, pero su dueña todavía no se registró
+  { id: 4, nombre: 'Kiwi', especie: 'Ave', raza: 'Cotorra', edad: 1, emailDuenio: 'sofia.diaz@mail.com' },
 ]
 
 export const turnos = [
@@ -30,7 +42,7 @@ export const estudios = [
 ]
 
 export const pagos = [
-  { id: 1, duenio: 'Ana Gómez', concepto: 'Consulta Luna', monto: 25000, estado: 'Pendiente' },
-  { id: 2, duenio: 'Juan Pérez', concepto: 'Radiografía Rocco', monto: 40000, estado: 'Pagado' },
-  { id: 3, duenio: 'Ana Gómez', concepto: 'Ecografía Michi', monto: 35000, estado: 'Pendiente' },
+  { id: 1, emailDuenio: 'ana.gomez@mail.com', concepto: 'Consulta Luna', monto: 25000, estado: 'Pendiente' },
+  { id: 2, emailDuenio: 'juan.perez@mail.com', concepto: 'Radiografía Rocco', monto: 40000, estado: 'Pagado' },
+  { id: 3, emailDuenio: 'ana.gomez@mail.com', concepto: 'Ecografía Michi', monto: 35000, estado: 'Pendiente' },
 ]

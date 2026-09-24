@@ -5,13 +5,17 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import Badge from './Badge'
 
 function TablaPacientes({ pacientes }) {
   const [busqueda, setBusqueda] = useState('')
 
   const texto = busqueda.toLowerCase()
   const filtrados = pacientes.filter(
-    (p) => p.nombre.toLowerCase().includes(texto) || p.duenio.toLowerCase().includes(texto),
+    (p) =>
+      p.nombre.toLowerCase().includes(texto) ||
+      p.duenio.toLowerCase().includes(texto) ||
+      p.emailDuenio.toLowerCase().includes(texto),
   )
 
   return (
@@ -20,7 +24,7 @@ function TablaPacientes({ pacientes }) {
         <span className="visualmente-oculto">Buscar paciente</span>
         <input
           type="search"
-          placeholder="Buscar por mascota o dueño/a…"
+          placeholder="Buscar por mascota, dueño/a o email…"
           value={busqueda}
           onChange={(e) => setBusqueda(e.target.value)}
         />
@@ -46,7 +50,10 @@ function TablaPacientes({ pacientes }) {
                 <td>{p.especie}</td>
                 <td>{p.raza}</td>
                 <td>{p.edad}</td>
-                <td>{p.duenio}</td>
+                <td>
+                  {p.duenio}{' '}
+                  {!p.registrado && <Badge estado="Sin registrar" />}
+                </td>
               </tr>
             ))}
             {filtrados.length === 0 && (

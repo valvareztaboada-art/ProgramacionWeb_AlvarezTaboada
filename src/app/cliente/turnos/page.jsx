@@ -5,7 +5,7 @@ import { CLIENTE_ACTUAL, obtenerTurnos } from '@/lib/datos'
 export const metadata = { title: 'Mis turnos' }
 
 export default async function MisTurnos() {
-  const turnos = await obtenerTurnos({ duenio: CLIENTE_ACTUAL })
+  const turnos = await obtenerTurnos({ emailDuenio: CLIENTE_ACTUAL.email })
 
   return (
     <>

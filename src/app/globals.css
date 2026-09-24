@@ -219,17 +219,50 @@ strong { font-weight: 800; }
 .login-card h1 { text-align: center; margin-bottom: 1rem; }
 .form { display: flex; flex-direction: column; gap: 0.5rem; }
 .form label { font-weight: 700; }
-.form input[type='email'],
-.form input[type='password'] {
+.form input:not([type='radio']),
+.form select {
+  width: 100%;
   padding: 0.65rem 0.9rem;
   border: 2px solid var(--borde);
   border-radius: 12px;
   font: inherit;
+  color: var(--texto);
   background: var(--crema);
   margin-bottom: 0.5rem;
 }
-.form input:focus { outline: 3px solid var(--mostaza); outline-offset: 1px; border-color: var(--azul); }
+.form input:focus,
+.form select:focus { outline: 3px solid var(--mostaza); outline-offset: 1px; border-color: var(--azul); }
 .form .btn { margin-top: 0.5rem; justify-content: center; }
+
+/* Campos con validación */
+.campo { display: flex; flex-direction: column; gap: 0.3rem; }
+.campo input,
+.campo select { margin-bottom: 0 !important; }
+.campo + .campo,
+.form-fila + .campo,
+.campo + .form-fila { margin-top: 0.6rem; }
+.campo-ayuda { font-size: 0.88rem; color: var(--texto-suave); }
+.campo-error { font-size: 0.88rem; font-weight: 700; color: #b3261e; }
+.campo-error::before { content: '⚠ '; }
+.form [aria-invalid='true'] { border-color: #b3261e; background: #fdf1ef; }
+
+.form-fila { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 0.6rem 1rem; }
+.form-grupo { border: none; padding: 0; margin: 0 0 1rem; }
+.form-grupo legend {
+  font-family: var(--fuente-titulos);
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--color-panel, var(--azul));
+  margin-bottom: 0.6rem;
+}
+.form-card { max-width: 620px; padding: 1.75rem; }
+
+.form-exito { display: flex; flex-direction: column; gap: 0.9rem; align-items: flex-start; }
+.form-exito h2 { color: var(--color-panel, var(--azul)); margin: 0; }
+.form-exito-botones { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+
+.login-intro { text-align: center; margin-bottom: 1.25rem; }
+.login-alternativa { text-align: center; margin-top: 1.25rem; }
 
 .login-caras { display: flex; justify-content: center; gap: 0.5rem; }
 .login-caras .ilustracion { width: 80px; }
@@ -333,6 +366,7 @@ strong { font-weight: 800; }
 .badge { padding: 0.2rem 0.8rem; border-radius: 999px; font-size: 0.85rem; font-weight: 800; white-space: nowrap; }
 .badge-confirmado, .badge-pagado, .badge-aplicada { background: var(--celeste); color: var(--azul-oscuro); }
 .badge-pendiente { background: var(--durazno); color: #7a4a06; }
+.badge-sin-registrar { background: transparent; border: 1.5px dashed var(--texto-suave); color: var(--texto-suave); }
 
 /* Enlaces dentro de tablas y listas */
 .enlace { color: var(--color-panel, var(--azul)); font-weight: 800; text-decoration: underline; text-decoration-color: var(--mostaza); text-underline-offset: 3px; }

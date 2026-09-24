@@ -14,7 +14,11 @@ function FichaMascota({ mascota, turnos, vacunas, estudios, volver }) {
         <div>
           <h1>{mascota.nombre}</h1>
           <p className="texto-suave">{mascota.especie} · {mascota.raza} · {mascota.edad} años</p>
-          <p>Dueño/a: <strong>{mascota.duenio}</strong></p>
+          <p>
+            Dueño/a: <strong>{mascota.duenio}</strong>
+            {mascota.registrado && <span className="texto-suave"> · {mascota.emailDuenio}</span>}
+            {!mascota.registrado && <> <Badge estado="Sin registrar" /></>}
+          </p>
         </div>
       </section>
 

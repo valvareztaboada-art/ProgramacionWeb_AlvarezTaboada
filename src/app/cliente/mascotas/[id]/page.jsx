@@ -6,7 +6,7 @@ import { CLIENTE_ACTUAL, obtenerMascota, obtenerTurnos, obtenerVacunas, obtenerE
 export async function generateMetadata({ params }) {
   const { id } = await params
   const mascota = await obtenerMascota(id)
-  const esSuya = mascota?.duenio === CLIENTE_ACTUAL
+  const esSuya = mascota?.emailDuenio === CLIENTE_ACTUAL.email
   return { title: esSuya ? mascota.nombre : 'Mascota' }
 }
 
@@ -15,7 +15,7 @@ export default async function FichaMiMascota({ params }) {
   const mascota = await obtenerMascota(id)
 
   // Si no existe, o no es de este cliente, mostramos la página 404
-  if (!mascota || mascota.duenio !== CLIENTE_ACTUAL) notFound()
+  if (!mascota || mascota.emailDuenio !== CLIENTE_ACTUAL.email) notFound()
 
   const [turnos, vacunas, estudios] = await Promise.all([
     obtenerTurnos({ mascotaId: mascota.id }),

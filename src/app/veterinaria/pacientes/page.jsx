@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import PageHeader from '@/components/PageHeader'
 import TablaPacientes from '@/components/TablaPacientes'
 import { obtenerMascotas } from '@/lib/datos'
@@ -12,7 +13,7 @@ export default async function Pacientes() {
   return (
     <>
       <PageHeader titulo="Pacientes" descripcion="Registro de todos los pacientes. Tocá un nombre para ver su ficha.">
-        <button className="btn btn-primario">+ Nuevo paciente</button>
+        <Link href="/veterinaria/pacientes/nuevo" className="btn btn-primario">+ Nuevo paciente</Link>
       </PageHeader>
       <TablaPacientes pacientes={pacientes} />
     </>

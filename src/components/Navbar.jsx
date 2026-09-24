@@ -10,6 +10,7 @@ function Navbar() {
         <EnlaceNav href="/" exacto>Inicio</EnlaceNav>
         <Link href="/#servicios">Servicios</Link>
         <Link href="/#contacto">Contacto</Link>
+        <EnlaceNav href="/registro">Registrarse</EnlaceNav>
         <Link href="/login" className="btn btn-primario">Ingresar</Link>
       </nav>
     </header>
