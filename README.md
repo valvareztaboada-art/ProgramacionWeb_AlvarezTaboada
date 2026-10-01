@@ -62,6 +62,7 @@ npm run dev
 | `npm run lint` | Revisa el código con oxlint (incluye reglas de accesibilidad) |
 | `npm test` | Corre los tests (`tests/`) con el test runner de Node |
 | `npm run build` | Compila la versión de producción |
+| `npx supabase <comando>` | CLI de Supabase (instalado como dependencia del proyecto) |
 
 ## CI/CD
 - **CI (GitHub Actions):** en cada pull request y en cada push a `main` se ejecutan lint, tests y build ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)).
