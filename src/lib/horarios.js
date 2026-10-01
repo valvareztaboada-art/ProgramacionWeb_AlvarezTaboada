@@ -27,11 +27,10 @@ function aHora(minutos) {
   return `${h}:${m}`
 }
 
-// Fecha de hoy en formato "2026-09-24" (el formato que usa <input type="date">)
+// Fecha de hoy EN ARGENTINA, formato "2026-09-24" (el que usa <input type="date">).
+// Se fija la zona horaria porque el servidor (Vercel) está en otra (UTC).
 export function hoyISO() {
-  const hoy = new Date()
-  hoy.setMinutes(hoy.getMinutes() - hoy.getTimezoneOffset())
-  return hoy.toISOString().slice(0, 10)
+  return new Date().toLocaleDateString('en-CA', { timeZone: 'America/Argentina/Buenos_Aires' })
 }
 
 // Devuelve los horarios de un día: [{ hora: '09:00', ocupado: false }, ...]

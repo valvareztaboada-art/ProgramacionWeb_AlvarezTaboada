@@ -1,10 +1,10 @@
 import PageHeader from '@/components/PageHeader'
-import { CLIENTE_ACTUAL, obtenerEstudios } from '@/lib/datos'
+import { obtenerEstudios } from '@/lib/datos'
 
 export const metadata = { title: 'Estudios' }
 
 export default async function MisEstudios() {
-  const estudios = await obtenerEstudios({ emailDuenio: CLIENTE_ACTUAL.email })
+  const estudios = await obtenerEstudios()
 
   return (
     <>

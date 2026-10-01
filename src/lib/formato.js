@@ -1,7 +1,8 @@
 // Funciones para mostrar datos con buen formato.
 
-// 0 → "Menos de 1 año" · 1 → "1 año" · 4 → "4 años"
+// 0 → "Menos de 1 año" · 1 → "1 año" · 4 → "4 años" · sin dato → ""
 export function formatearEdad(edad) {
+  if (edad === null || edad === undefined || edad === '') return ''
   if (edad < 1) return 'Menos de 1 año'
   return edad === 1 ? '1 año' : `${edad} años`
 }

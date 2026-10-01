@@ -1,44 +1,55 @@
 'use client'
 
-// Client Component: usa useState, eventos (onChange, onSubmit) y useRouter.
-// Login de maqueta: todavía no valida nada.
-// Cuando veamos Supabase Auth, acá va la autenticación real con roles.
+// Client Component: usa useState, eventos y Supabase Auth desde el navegador.
+// Ya no se elige el rol: se lee del perfil del usuario en la base de datos.
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { crearClienteNavegador } from '@/lib/supabase/navegador'
+import { mensajeDeError } from '@/lib/supabase/mensajes'
 
 function FormularioLogin() {
-  const [rol, setRol] = useState('cliente')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const [cargando, setCargando] = useState(false)
   const router = useRouter()
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault()
-    router.push(rol === 'cliente' ? '/cliente' : '/veterinaria')
+    setError('')
+    setCargando(true)
+
+    const supabase = crearClienteNavegador()
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+
+    if (error) {
+      setError(mensajeDeError(error))
+      setCargando(false)
+      return
+    }
+
+    // ¿Es cliente o veterinaria? Lo dice su perfil (no lo elige el usuario)
+    const { data: perfil } = await supabase.from('perfiles').select('rol').eq('id', data.user.id).single()
+    router.push(perfil?.rol === 'veterinaria' ? '/veterinaria' : '/cliente')
+    router.refresh()
   }
 
   return (
     <form className="form" onSubmit={handleSubmit}>
-      <fieldset className="selector-rol">
-        <legend>¿Cómo querés ingresar?</legend>
-        <label className={rol === 'cliente' ? 'activo' : ''}>
-          <input type="radio" name="rol" value="cliente"
-            checked={rol === 'cliente'} onChange={(e) => setRol(e.target.value)} />
-          Dueño/a
-        </label>
-        <label className={rol === 'veterinaria' ? 'activo' : ''}>
-          <input type="radio" name="rol" value="veterinaria"
-            checked={rol === 'veterinaria'} onChange={(e) => setRol(e.target.value)} />
-          Veterinaria
-        </label>
-      </fieldset>
-
       <label htmlFor="email">Email</label>
-      <input id="email" type="email" placeholder="tu@email.com" />
+      <input id="email" type="email" autoComplete="email" placeholder="tu@email.com" required
+        value={email} onChange={(e) => setEmail(e.target.value)} />
 
       <label htmlFor="password">Contraseña</label>
-      <input id="password" type="password" placeholder="••••••••" />
+      <input id="password" type="password" autoComplete="current-password" required
+        value={password} onChange={(e) => setPassword(e.target.value)} />
 
-      <button type="submit" className="btn btn-primario">Entrar</button>
+      {error && <p className="form-error" role="alert">{error}</p>}
+
+      <button type="submit" className="btn btn-primario" disabled={cargando}>
+        {cargando ? 'Ingresando…' : 'Entrar'}
+      </button>
     </form>
   )
 }

@@ -17,6 +17,7 @@ Tiene **doble interfaz**:
 
 ## Tecnologías
 - **Next.js** (App Router) + React
+- **Supabase**: base de datos Postgres, autenticación y RLS
 - CSS puro (variables, flexbox, grid, animaciones, responsive)
 
 ## Cómo está organizado (App Router)
@@ -36,8 +37,9 @@ src/
 │   └── veterinaria/        # Interfaz de la veterinaria
 │       └── pacientes/[id]/ # Ruta dinámica: ficha de cada paciente
 ├── components/             # Componentes reutilizables
-├── lib/datos.js            # Funciones async para obtener datos (después: Supabase)
-└── data/mockData.js        # Datos de ejemplo
+├── lib/datos.js            # Funciones async que leen de Supabase (Server Components)
+├── lib/supabase/           # Clientes de Supabase (servidor y navegador)
+├── proxy.js                # Renueva la sesión y protege /cliente y /veterinaria
 ```
 
 ### Server y Client Components
@@ -76,10 +78,52 @@ npm run dev
 - Menú hamburguesa en pantallas chicas (`aria-expanded`), paneles adaptados a celular.
 - Auditado con axe (WCAG 2.1 AA): 0 problemas en las 15 vistas; sin desbordes a 375 px y 768 px.
 
+## Supabase: base de datos, autenticación y RLS
+
+### Tablas
+| Tabla | Qué guarda | Relación |
+|---|---|---|
+| `perfiles` | Nombre, email, teléfono y **rol** de cada usuario | 1 a 1 con `auth.users` |
+| `mascotas` | Pacientes | Dueño/a por `email_duenio` |
+| `especialidades` | Consulta, Vacunación, Estudios, Peluquería | — |
+| `turnos` | Día, hora, motivo, estado | `mascota_id`, `especialidad_id` |
+| `vacunas`, `estudios`, `pagos` | Historial clínico y cobros | `mascota_id` |
+
+Todo está en [`supabase/migrations`](supabase/migrations) y los datos de ejemplo en [`supabase/seed.sql`](supabase/seed.sql).
+
+### Quién puede hacer qué (RLS)
+| | Cliente (dueño/a) | Veterinaria |
+|---|---|---|
+| Ver mascotas, turnos, vacunas, estudios, pagos | Solo los de **sus** mascotas | Todos |
+| Cargar / editar mascotas, vacunas, estudios, pagos | ❌ | ✅ |
+| Pedir turno | ✅ Para sus mascotas, a futuro, en horario de atención | ✅ |
+| Cancelar turno | ✅ Solo con **más de 24 h** (`cancelar_turno`) | ✅ Siempre |
+| Confirmar / marcar atendido o **ausente** | ❌ | ✅ |
+| Cambiarse el rol | ❌ (bloqueado por permisos de columna) | — |
+
+- Todos los que se registran son **clientes**; el rol `veterinaria` se asigna a mano.
+- El dueño/a ve sus mascotas solo si **confirmó su email** (así nadie puede registrarse con un email ajeno).
+- No puede haber dos turnos activos en el mismo horario (índice único).
+
+### Configurar un proyecto nuevo
+1. Crear el proyecto en [supabase.com](https://supabase.com) y copiar `.env.example` como `.env.local` con la URL y la clave *publishable*.
+2. Subir las tablas y los datos de ejemplo:
+   ```bash
+   npx supabase login
+   npx supabase link --project-ref <id-del-proyecto>
+   npx supabase db push --include-seed
+   ```
+3. En **Authentication → URL Configuration**: *Site URL* = la URL de Vercel; *Redirect URLs* = `http://localhost:3000/**` y `https://*.vercel.app/**`.
+4. Registrarse en el sitio y convertir esa cuenta en veterinaria (SQL Editor):
+   ```sql
+   update public.perfiles set rol = 'veterinaria' where email = 'tu@email.com';
+   ```
+5. En Vercel → Settings → Environment Variables: cargar las mismas dos variables.
+
 ## Próximos pasos (según avance la materia)
-- [ ] Migrar a Next.js (App Router)
-- [ ] Base de datos con Supabase
-- [ ] Login real y roles (dueño / veterinaria)
+- [x] Migrar a Next.js (App Router)
+- [x] Base de datos con Supabase
+- [x] Login real y roles (dueño / veterinaria)
 - [ ] Pagos con Mercado Pago
 - [ ] Tests con Playwright
-- [ ] CI/CD con GitHub Actions
+- [x] CI/CD con GitHub Actions

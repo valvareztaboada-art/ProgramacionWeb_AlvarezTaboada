@@ -49,7 +49,7 @@ function TablaPacientes({ pacientes }) {
                 </td>
                 <td>{p.especie}</td>
                 <td>{p.raza}</td>
-                <td>{p.edad}</td>
+                <td>{p.edad ?? '—'}</td>
                 <td>
                   {p.duenio}{' '}
                   {!p.registrado && <Badge estado="Sin registrar" />}

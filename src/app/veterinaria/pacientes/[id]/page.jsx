@@ -28,6 +28,7 @@ export default async function FichaPaciente({ params }) {
       vacunas={vacunas}
       estudios={estudios}
       volver={{ href: '/veterinaria/pacientes', label: 'Pacientes' }}
+      esVeterinaria
     />
   )
 }

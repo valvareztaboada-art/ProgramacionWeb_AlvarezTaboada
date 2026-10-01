@@ -1,46 +1,77 @@
 'use client'
 
-// Client Component: usa useState y eventos (onChange, onSubmit).
-// Registro de maqueta: valida los datos pero todavía no guarda la cuenta.
-// Cuando veamos Supabase Auth, en handleSubmit se crea el usuario de verdad.
+// Client Component: usa useState, eventos y Supabase Auth.
+// Crea la cuenta (siempre con rol "cliente": lo decide la base de datos)
+// y Supabase le manda un email para confirmarla.
 
 import { useState } from 'react'
-import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import Campo from './Campo'
 import { validarRegistro } from '@/lib/validaciones'
+import { crearClienteNavegador } from '@/lib/supabase/navegador'
+import { mensajeDeError } from '@/lib/supabase/mensajes'
 
 const VACIO = { nombre: '', email: '', telefono: '', password: '', confirmar: '' }
 
 function FormularioRegistro() {
   const [datos, setDatos] = useState(VACIO)
   const [errores, setErrores] = useState({})
+  const [errorGeneral, setErrorGeneral] = useState('')
+  const [cargando, setCargando] = useState(false)
   const [enviado, setEnviado] = useState(false)
+  const router = useRouter()
 
   // Un solo handler para todos los inputs: usa el "name" del input
   function handleChange(e) {
     setDatos({ ...datos, [e.target.name]: e.target.value })
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault()
+    setErrorGeneral('')
     const nuevosErrores = validarRegistro(datos)
     setErrores(nuevosErrores)
+    if (Object.keys(nuevosErrores).length > 0) return
 
-    if (Object.keys(nuevosErrores).length === 0) {
-      // TODO (Supabase Auth): crear el usuario con datos.email y datos.password
-      setEnviado(true)
+    setCargando(true)
+    const { data, error } = await crearClienteNavegador().auth.signUp({
+      email: datos.email.trim().toLowerCase(),
+      password: datos.password,
+      options: {
+        // Estos datos los usa la base para crear el perfil (el rol NO se manda)
+        data: { nombre: datos.nombre.trim(), telefono: datos.telefono.trim() },
+        // A dónde vuelve después de tocar el link del email
+        emailRedirectTo: `${window.location.origin}/auth/confirmar`,
+      },
+    })
+    setCargando(false)
+
+    if (error) {
+      setErrorGeneral(mensajeDeError(error))
+      return
     }
+
+    // Si el proyecto no pide confirmar el email, ya queda la sesión iniciada
+    if (data.session) {
+      router.push('/cliente')
+      router.refresh()
+      return
+    }
+    setEnviado(true)
   }
 
   if (enviado) {
     return (
       <div className="form-exito" role="status">
-        <h2>¡Bienvenido/a, {datos.nombre.split(' ')[0]}!</h2>
+        <h2>¡Ya casi, {datos.nombre.split(' ')[0]}!</h2>
         <p>
-          Tu cuenta quedó creada con <strong>{datos.email}</strong>. Si la veterinaria ya
-          cargó a tu mascota con este email, la vas a encontrar en tu cuenta.
+          Te mandamos un email a <strong>{datos.email}</strong>. Tocá el enlace para
+          confirmar tu cuenta y vas a entrar directo.
         </p>
-        <Link href="/cliente" className="btn btn-primario">Ir a mi cuenta</Link>
+        <p className="texto-suave">
+          Si la veterinaria ya cargó a tu mascota con este email, la vas a encontrar en tu cuenta.
+          ¿No te llegó? Revisá la carpeta de spam.
+        </p>
       </div>
     )
   }
@@ -77,7 +108,11 @@ function FormularioRegistro() {
           aria-invalid={Boolean(errores.confirmar)} aria-describedby="confirmar-mensaje" />
       </Campo>
 
-      <button type="submit" className="btn btn-primario">Crear cuenta</button>
+      {errorGeneral && <p className="form-error" role="alert">{errorGeneral}</p>}
+
+      <button type="submit" className="btn btn-primario" disabled={cargando}>
+        {cargando ? 'Creando cuenta…' : 'Crear cuenta'}
+      </button>
     </form>
   )
 }

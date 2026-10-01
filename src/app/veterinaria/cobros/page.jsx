@@ -25,7 +25,7 @@ export default async function Cobros() {
               <tr key={p.id}>
                 <td>{p.duenio}</td>
                 <td>{p.concepto}</td>
-                <td>${p.monto.toLocaleString('es-AR')}</td>
+                <td>${Number(p.monto).toLocaleString('es-AR')}</td>
                 <td><Badge estado={p.estado} /></td>
               </tr>
             ))}

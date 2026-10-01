@@ -2,12 +2,12 @@ import Link from 'next/link'
 import PageHeader from '@/components/PageHeader'
 import { formatearEdad } from '@/lib/formato'
 import { IlustracionMascota } from '@/components/ilustraciones/Ilustraciones'
-import { CLIENTE_ACTUAL, obtenerMascotas } from '@/lib/datos'
+import { obtenerMascotas } from '@/lib/datos'
 
 export const metadata = { title: 'Mis mascotas' }
 
 export default async function MisMascotas() {
-  const mascotas = await obtenerMascotas({ emailDuenio: CLIENTE_ACTUAL.email })
+  const mascotas = await obtenerMascotas()
 
   return (
     <>
@@ -17,7 +17,7 @@ export default async function MisMascotas() {
           <Link key={m.id} href={`/cliente/mascotas/${m.id}`} className="card card-mascota">
             <IlustracionMascota especie={m.especie} className="card-mascota-ilustracion" />
             <h2>{m.nombre}</h2>
-            <p className="texto-suave">{m.raza} · {formatearEdad(m.edad)}</p>
+            <p className="texto-suave">{[m.raza, formatearEdad(m.edad)].filter(Boolean).join(' · ')}</p>
           </Link>
         ))}
       </div>

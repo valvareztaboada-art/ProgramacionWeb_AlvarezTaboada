@@ -1,7 +1,9 @@
-// Etiqueta de color según el estado (Pendiente, Confirmado, Pagado, Sin registrar...)
+// Etiqueta de color según el estado.
+// Recibe el estado como viene de la base ("pendiente", "ausente"...) o un texto ("Sin registrar").
 function Badge({ estado }) {
   const clase = estado.toLowerCase().replaceAll(' ', '-')
-  return <span className={`badge badge-${clase}`}>{estado}</span>
+  const texto = estado.charAt(0).toUpperCase() + estado.slice(1)
+  return <span className={`badge badge-${clase}`}>{texto}</span>
 }
 
 export default Badge

@@ -3,16 +3,19 @@
 // Client Component: usa useState, useEffect y eventos.
 // Los datos (mascotas del cliente, especialidades y horarios ocupados) los busca
 // la página en el servidor y llegan por props.
-// Pedido de turno de maqueta: valida pero todavía no guarda.
-// Cuando veamos Supabase, en handleSubmit se inserta el turno en la tabla "turnos".
+// Al confirmar, inserta el turno en Supabase. La base de datos vuelve a controlar
+// todo (que la mascota sea suya, el horario de atención, que no esté ocupado).
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import Campo from './Campo'
 import Icono from './Icono'
 import { validarTurno } from '@/lib/validaciones'
 import { hoyISO, horariosDelDia } from '@/lib/horarios'
 import { formatearFecha } from '@/lib/formato'
+import { crearClienteNavegador } from '@/lib/supabase/navegador'
+import { mensajeDeError } from '@/lib/supabase/mensajes'
 
 function FormularioTurno({ mascotas, especialidades, ocupados }) {
   // Si tiene una sola mascota, ya viene elegida
@@ -26,7 +29,10 @@ function FormularioTurno({ mascotas, especialidades, ocupados }) {
 
   const [datos, setDatos] = useState(vacio)
   const [errores, setErrores] = useState({})
+  const [errorGeneral, setErrorGeneral] = useState('')
+  const [cargando, setCargando] = useState(false)
   const [enviado, setEnviado] = useState(false)
+  const router = useRouter()
 
   // La fecha de hoy se calcula en el navegador (useEffect solo corre ahí).
   // Si la calculáramos durante el render, el servidor y el navegador podrían
@@ -40,6 +46,7 @@ function FormularioTurno({ mascotas, especialidades, ocupados }) {
 
   const horarios = datos.fecha ? horariosDelDia(datos.fecha, ocupados) : []
   const mascotaElegida = mascotas.find((m) => String(m.id) === datos.mascotaId)
+  const especialidadElegida = especialidades.find((esp) => esp.id === datos.especialidad)
 
   function handleChange(e) {
     const { name, value } = e.target
@@ -51,20 +58,39 @@ function FormularioTurno({ mascotas, especialidades, ocupados }) {
     }
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault()
+    setErrorGeneral('')
     const nuevosErrores = validarTurno(datos, hoy)
     setErrores(nuevosErrores)
+    if (Object.keys(nuevosErrores).length > 0) return
 
-    if (Object.keys(nuevosErrores).length === 0) {
-      // TODO (Supabase): insertar el turno con estado "Pendiente"
-      setEnviado(true)
+    setCargando(true)
+    const supabase = crearClienteNavegador()
+    const { data: { user } } = await supabase.auth.getUser()
+    const { error } = await supabase.from('turnos').insert({
+      mascota_id: Number(datos.mascotaId),
+      especialidad_id: datos.especialidad,
+      fecha: datos.fecha,
+      hora: datos.hora,
+      motivo: datos.comentario.trim() || null,
+      creado_por: user.id,
+    })
+    setCargando(false)
+
+    if (error) {
+      setErrorGeneral(mensajeDeError(error))
+      router.refresh() // por si el horario se ocupó: actualiza la lista de ocupados
+      return
     }
+    setEnviado(true)
+    router.refresh()
   }
 
   function pedirOtro() {
     setDatos(vacio)
     setErrores({})
+    setErrorGeneral('')
     setEnviado(false)
   }
 
@@ -73,7 +99,7 @@ function FormularioTurno({ mascotas, especialidades, ocupados }) {
       <div className="form-exito" role="status">
         <h2>¡Turno solicitado!</h2>
         <p>
-          <strong>{mascotaElegida.nombre}</strong> · {datos.especialidad}
+          <strong>{mascotaElegida.nombre}</strong> · {especialidadElegida.nombre}
           <br />
           {formatearFecha(datos.fecha)} a las {datos.hora} h
         </p>
@@ -111,9 +137,9 @@ function FormularioTurno({ mascotas, especialidades, ocupados }) {
         <legend>2. ¿Qué necesita?</legend>
         <div className="opciones">
           {especialidades.map((esp) => (
-            <label key={esp.id} className={`opcion ${datos.especialidad === esp.nombre ? 'activo' : ''}`}>
-              <input type="radio" name="especialidad" value={esp.nombre}
-                checked={datos.especialidad === esp.nombre} onChange={handleChange} />
+            <label key={esp.id} className={`opcion ${datos.especialidad === esp.id ? 'activo' : ''}`}>
+              <input type="radio" name="especialidad" value={esp.id}
+                checked={datos.especialidad === esp.id} onChange={handleChange} />
               <Icono nombre={esp.icono} size={26} />
               <strong>{esp.nombre}</strong>
               <span className="texto-suave">{esp.descripcion}</span>
@@ -163,7 +189,11 @@ function FormularioTurno({ mascotas, especialidades, ocupados }) {
           value={datos.comentario} onChange={handleChange} />
       </Campo>
 
-      <button type="submit" className="btn btn-primario">Pedir turno</button>
+      {errorGeneral && <p className="form-error" role="alert">{errorGeneral}</p>}
+
+      <button type="submit" className="btn btn-primario" disabled={cargando}>
+        {cargando ? 'Pidiendo turno…' : 'Pedir turno'}
+      </button>
     </form>
   )
 }
