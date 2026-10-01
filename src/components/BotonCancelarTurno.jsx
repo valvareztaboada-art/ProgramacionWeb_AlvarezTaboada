@@ -18,14 +18,18 @@ function BotonCancelarTurno({ turnoId, descripcion }) {
 
     setCargando(true)
     setError('')
-    const { error } = await crearClienteNavegador().rpc('cancelar_turno', { p_turno_id: turnoId })
-    setCargando(false)
-
-    if (error) {
+    try {
+      const { error } = await crearClienteNavegador().rpc('cancelar_turno', { p_turno_id: turnoId })
+      if (error) {
+        setError(mensajeDeError(error))
+        return
+      }
+      router.refresh() // vuelve a pedir los datos al servidor
+    } catch (error) {
       setError(mensajeDeError(error))
-      return
+    } finally {
+      setCargando(false)
     }
-    router.refresh() // vuelve a pedir los datos al servidor
   }
 
   return (

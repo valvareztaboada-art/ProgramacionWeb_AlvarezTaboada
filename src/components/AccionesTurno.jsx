@@ -32,17 +32,24 @@ function AccionesTurno({ turnoId, estado, descripcion }) {
 
     setCargando(true)
     setError('')
-    const { error } = await crearClienteNavegador()
-      .from('turnos')
-      .update({ estado: nuevoEstado })
-      .eq('id', turnoId)
-    setCargando(false)
+    try {
+      // .select() devuelve la fila modificada: si viene vacía, el RLS no dejó cambiarla
+      const { data, error } = await crearClienteNavegador()
+        .from('turnos')
+        .update({ estado: nuevoEstado })
+        .eq('id', turnoId)
+        .select('id')
 
-    if (error) {
+      if (error || data.length === 0) {
+        setError(mensajeDeError(error ?? { code: '42501' }))
+        return
+      }
+      router.refresh()
+    } catch (error) {
       setError(mensajeDeError(error))
-      return
+    } finally {
+      setCargando(false)
     }
-    router.refresh()
   }
 
   return (
