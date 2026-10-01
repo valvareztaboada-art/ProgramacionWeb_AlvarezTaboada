@@ -1,11 +1,11 @@
-import Link from 'next/link'
 import Logo from './Logo'
 import Icono from './Icono'
 import EnlaceNav from './EnlaceNav'
+import BotonCerrarSesion from './BotonCerrarSesion'
 
-// Server Component. Solo el enlace (EnlaceNav) es Client Component.
-// El ícono se dibuja en el servidor y se le pasa como children.
-function Sidebar({ titulo, menu }) {
+// Server Component. Solo el enlace (EnlaceNav) y el botón de salir son Client Components.
+// El ícono se dibuja en el servidor y se les pasa como children.
+function Sidebar({ titulo, menu, usuario }) {
   return (
     <aside className="sidebar">
       <Logo claro />
@@ -21,9 +21,15 @@ function Sidebar({ titulo, menu }) {
           ))}
         </ul>
       </nav>
-      <Link href="/login" className="sidebar-salir">
-        <Icono nombre="salir" /> Cerrar sesión
-      </Link>
+      <div className="sidebar-pie">
+        <p className="sidebar-usuario">
+          <strong>{usuario.nombre}</strong>
+          <span>{usuario.email}</span>
+        </p>
+        <BotonCerrarSesion>
+          <Icono nombre="salir" /> Cerrar sesión
+        </BotonCerrarSesion>
+      </div>
     </aside>
   )
 }

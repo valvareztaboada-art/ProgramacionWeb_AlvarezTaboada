@@ -1,39 +1,60 @@
 'use client'
 
 // Client Component: usa useState y eventos (onChange, onSubmit).
-// Alta de paciente de maqueta: valida los datos pero todavía no los guarda.
-// Cuando veamos Supabase, en handleSubmit se inserta la mascota en la tabla "mascotas".
+// Inserta la mascota en Supabase. Solo funciona para la veterinaria:
+// el RLS rechaza el INSERT de cualquier otro usuario.
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import Campo from './Campo'
 import { validarPaciente } from '@/lib/validaciones'
+import { crearClienteNavegador } from '@/lib/supabase/navegador'
+import { mensajeDeError } from '@/lib/supabase/mensajes'
 
 const VACIO = { nombre: '', especie: '', raza: '', edad: '', emailDuenio: '' }
 
 function FormularioPaciente() {
   const [datos, setDatos] = useState(VACIO)
   const [errores, setErrores] = useState({})
+  const [errorGeneral, setErrorGeneral] = useState('')
+  const [cargando, setCargando] = useState(false)
   const [enviado, setEnviado] = useState(false)
+  const router = useRouter()
 
   function handleChange(e) {
     setDatos({ ...datos, [e.target.name]: e.target.value })
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault()
+    setErrorGeneral('')
     const nuevosErrores = validarPaciente(datos)
     setErrores(nuevosErrores)
+    if (Object.keys(nuevosErrores).length > 0) return
 
-    if (Object.keys(nuevosErrores).length === 0) {
-      // TODO (Supabase): insertar { ...datos } en la tabla "mascotas"
-      setEnviado(true)
+    setCargando(true)
+    const { error } = await crearClienteNavegador().from('mascotas').insert({
+      nombre: datos.nombre.trim(),
+      especie: datos.especie,
+      raza: datos.raza.trim() || null,
+      edad: datos.edad === '' ? null : Number(datos.edad),
+      email_duenio: datos.emailDuenio.trim().toLowerCase(),
+    })
+    setCargando(false)
+
+    if (error) {
+      setErrorGeneral(mensajeDeError(error))
+      return
     }
+    setEnviado(true)
+    router.refresh()
   }
 
   function cargarOtro() {
     setDatos(VACIO)
     setErrores({})
+    setErrorGeneral('')
     setEnviado(false)
   }
 
@@ -101,7 +122,11 @@ function FormularioPaciente() {
         </Campo>
       </fieldset>
 
-      <button type="submit" className="btn btn-primario">Guardar paciente</button>
+      {errorGeneral && <p className="form-error" role="alert">{errorGeneral}</p>}
+
+      <button type="submit" className="btn btn-primario" disabled={cargando}>
+        {cargando ? 'Guardando…' : 'Guardar paciente'}
+      </button>
     </form>
   )
 }

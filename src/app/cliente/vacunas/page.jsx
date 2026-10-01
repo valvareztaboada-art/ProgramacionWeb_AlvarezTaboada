@@ -1,11 +1,11 @@
 import PageHeader from '@/components/PageHeader'
 import Badge from '@/components/Badge'
-import { CLIENTE_ACTUAL, obtenerVacunas } from '@/lib/datos'
+import { obtenerVacunas } from '@/lib/datos'
 
 export const metadata = { title: 'Vacunas' }
 
 export default async function Vacunas() {
-  const vacunas = await obtenerVacunas({ emailDuenio: CLIENTE_ACTUAL.email })
+  const vacunas = await obtenerVacunas()
 
   return (
     <>

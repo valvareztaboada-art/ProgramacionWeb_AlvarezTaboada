@@ -3,11 +3,11 @@ import SaltarAlContenido from './SaltarAlContenido'
 
 // Estructura compartida por las dos interfaces (cliente y veterinaria).
 // El "rol" cambia el color del panel.
-function PanelLayout({ titulo, rol, menu, children }) {
+function PanelLayout({ titulo, rol, menu, usuario, children }) {
   return (
     <div className={`panel-layout panel-${rol}`}>
       <SaltarAlContenido />
-      <Sidebar titulo={titulo} menu={menu} />
+      <Sidebar titulo={titulo} menu={menu} usuario={usuario} />
       <main id="contenido" tabIndex={-1} className="panel-contenido">{children}</main>
     </div>
   )

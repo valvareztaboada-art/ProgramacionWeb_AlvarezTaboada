@@ -1,21 +1,19 @@
 import { notFound } from 'next/navigation'
 import FichaMascota from '@/components/FichaMascota'
-import { CLIENTE_ACTUAL, obtenerMascota, obtenerTurnos, obtenerVacunas, obtenerEstudios } from '@/lib/datos'
+import { obtenerMascota, obtenerTurnos, obtenerVacunas, obtenerEstudios } from '@/lib/datos'
 
 // Ruta dinámica: [id] toma el valor de la URL. Ej: /cliente/mascotas/2 → id = "2"
 export async function generateMetadata({ params }) {
   const { id } = await params
   const mascota = await obtenerMascota(id)
-  const esSuya = mascota?.emailDuenio === CLIENTE_ACTUAL.email
-  return { title: esSuya ? mascota.nombre : 'Mascota' }
+  return { title: mascota?.nombre ?? 'Mascota' }
 }
 
 export default async function FichaMiMascota({ params }) {
   const { id } = await params
+  // Si la mascota no es de este usuario, el RLS no la devuelve → 404
   const mascota = await obtenerMascota(id)
-
-  // Si no existe, o no es de este cliente, mostramos la página 404
-  if (!mascota || mascota.emailDuenio !== CLIENTE_ACTUAL.email) notFound()
+  if (!mascota) notFound()
 
   const [turnos, vacunas, estudios] = await Promise.all([
     obtenerTurnos({ mascotaId: mascota.id }),

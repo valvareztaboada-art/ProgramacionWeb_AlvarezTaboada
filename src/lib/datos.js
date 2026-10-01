@@ -1,85 +1,135 @@
-// Funciones para obtener datos. Solo se usan desde Server Components.
-// Son async porque simulan una consulta a la base de datos (tardan un poquito).
-// Cuando veamos Supabase, cambia el interior de cada función, pero las páginas quedan igual.
+// Funciones para obtener datos de Supabase. Solo se usan desde Server Components.
+//
+// IMPORTANTE: acá NO filtramos "lo de cada usuario". Eso lo hace el RLS de la base:
+// si la que pide es la veterinaria, Supabase devuelve todo; si es un cliente,
+// devuelve solo lo de sus mascotas. La misma consulta sirve para los dos.
 
-import { usuarios, mascotas, especialidades, turnos, vacunas, estudios, pagos } from '@/data/mockData'
+import { cache } from 'react'
+import { crearClienteServidor } from '@/lib/supabase/servidor'
 
-// Para la vista del cliente simulamos que está logueada Ana.
-// Con Supabase Auth esto sale de la sesión del usuario.
-export const CLIENTE_ACTUAL = usuarios[0]
+// Si una consulta falla, mostramos el error (lo atrapa el error boundary de Next)
+function revisar({ data, error }) {
+  if (error) throw new Error(`Error al consultar Supabase: ${error.message}`)
+  return data
+}
 
-const esperar = (ms = 300) => new Promise((resolve) => setTimeout(resolve, ms))
+// Usuario logueado + su perfil. cache() evita repetir la consulta si en el mismo
+// pedido la llaman el layout y la página.
+export const obtenerUsuarioActual = cache(async () => {
+  const supabase = await crearClienteServidor()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return null
 
-// Busca al dueño/a por email. Si todavía no se registró, no hay usuario.
-function conDuenio(registro) {
-  const usuario = usuarios.find((u) => u.email === registro.emailDuenio)
+  const { data: perfil } = await supabase
+    .from('perfiles')
+    .select('nombre, email, rol')
+    .eq('id', user.id)
+    .single()
+
   return {
-    ...registro,
-    duenio: usuario ? usuario.nombre : registro.emailDuenio,
-    registrado: Boolean(usuario),
+    id: user.id,
+    email: user.email,
+    nombre: perfil?.nombre || user.email,
+    rol: perfil?.rol ?? 'cliente',
+  }
+})
+
+// email → nombre de los dueños/as que ya tienen cuenta
+async function obtenerNombresDeDuenios(supabase, emails) {
+  if (emails.length === 0) return new Map()
+  const perfiles = revisar(await supabase.from('perfiles').select('email, nombre').in('email', emails))
+  return new Map(perfiles.map((p) => [p.email, p.nombre || p.email]))
+}
+
+// Pasa una fila de "mascotas" al formato que usan los componentes
+function aMascota(fila, duenios) {
+  return {
+    id: fila.id,
+    nombre: fila.nombre,
+    especie: fila.especie,
+    raza: fila.raza ?? '',
+    edad: fila.edad,
+    emailDuenio: fila.email_duenio,
+    duenio: duenios.get(fila.email_duenio) ?? fila.email_duenio,
+    registrado: duenios.has(fila.email_duenio),
   }
 }
 
-// Agrega los datos de la mascota y su dueño/a a un registro (como un JOIN en SQL)
-function conMascota(registro) {
-  const mascota = conDuenio(mascotas.find((m) => m.id === registro.mascotaId))
-  return {
-    ...registro,
-    mascota: mascota.nombre,
-    duenio: mascota.duenio,
-    emailDuenio: mascota.emailDuenio,
-  }
+// Agrega los datos de la mascota y su dueño/a a turnos, vacunas, estudios y pagos
+async function conMascota(supabase, filas) {
+  const emails = [...new Set(filas.map((f) => f.mascotas.email_duenio))]
+  const duenios = await obtenerNombresDeDuenios(supabase, emails)
+  return filas.map(({ mascotas: m, mascota_id, ...resto }) => ({
+    ...resto,
+    mascotaId: mascota_id,
+    mascota: m.nombre,
+    emailDuenio: m.email_duenio,
+    duenio: duenios.get(m.email_duenio) ?? m.email_duenio,
+  }))
 }
 
-function filtrar(lista, { emailDuenio, mascotaId } = {}) {
-  return lista
-    .map(conMascota)
-    .filter((r) => (!emailDuenio || r.emailDuenio === emailDuenio) && (!mascotaId || r.mascotaId === mascotaId))
+export async function obtenerMascotas() {
+  const supabase = await crearClienteServidor()
+  const filas = revisar(await supabase.from('mascotas').select('*').order('nombre'))
+  const duenios = await obtenerNombresDeDuenios(supabase, [...new Set(filas.map((f) => f.email_duenio))])
+  return filas.map((f) => aMascota(f, duenios))
 }
 
-export async function obtenerMascotas({ emailDuenio } = {}) {
-  await esperar()
-  return mascotas
-    .filter((m) => !emailDuenio || m.emailDuenio === emailDuenio)
-    .map(conDuenio)
-}
-
+// Devuelve null si no existe O si el usuario no tiene permiso para verla (RLS)
 export async function obtenerMascota(id) {
-  await esperar()
-  const mascota = mascotas.find((m) => m.id === Number(id))
-  return mascota ? conDuenio(mascota) : null
+  if (!/^\d+$/.test(String(id))) return null
+  const supabase = await crearClienteServidor()
+  const fila = revisar(await supabase.from('mascotas').select('*').eq('id', id).maybeSingle())
+  if (!fila) return null
+  const duenios = await obtenerNombresDeDuenios(supabase, [fila.email_duenio])
+  return aMascota(fila, duenios)
 }
 
-export async function obtenerTurnos(filtros) {
-  await esperar()
-  return filtrar(turnos, filtros)
+export async function obtenerTurnos({ mascotaId } = {}) {
+  const supabase = await crearClienteServidor()
+  let consulta = supabase
+    .from('turnos')
+    .select('id, fecha, hora, motivo, estado, mascota_id, mascotas(nombre, email_duenio), especialidades(nombre)')
+    .order('fecha')
+    .order('hora')
+  if (mascotaId) consulta = consulta.eq('mascota_id', mascotaId)
+
+  const filas = await conMascota(supabase, revisar(await consulta))
+  return filas.map(({ especialidades, hora, ...t }) => ({
+    ...t,
+    hora: hora.slice(0, 5), // "10:00:00" → "10:00"
+    especialidad: especialidades.nombre,
+  }))
 }
 
-export async function obtenerVacunas(filtros) {
-  await esperar()
-  return filtrar(vacunas, filtros)
+export async function obtenerVacunas({ mascotaId } = {}) {
+  const supabase = await crearClienteServidor()
+  let consulta = supabase.from('vacunas').select('*, mascotas(nombre, email_duenio)').order('fecha')
+  if (mascotaId) consulta = consulta.eq('mascota_id', mascotaId)
+  return conMascota(supabase, revisar(await consulta))
 }
 
-export async function obtenerEstudios(filtros) {
-  await esperar()
-  return filtrar(estudios, filtros)
+export async function obtenerEstudios({ mascotaId } = {}) {
+  const supabase = await crearClienteServidor()
+  let consulta = supabase.from('estudios').select('*, mascotas(nombre, email_duenio)').order('fecha', { ascending: false })
+  if (mascotaId) consulta = consulta.eq('mascota_id', mascotaId)
+  return conMascota(supabase, revisar(await consulta))
 }
 
-export async function obtenerPagos({ emailDuenio } = {}) {
-  await esperar()
-  return pagos
-    .filter((p) => !emailDuenio || p.emailDuenio === emailDuenio)
-    .map(conDuenio)
+export async function obtenerPagos() {
+  const supabase = await crearClienteServidor()
+  const filas = revisar(await supabase.from('pagos').select('*, mascotas(nombre, email_duenio)').order('creado_en', { ascending: false }))
+  return conMascota(supabase, filas)
 }
 
 export async function obtenerEspecialidades() {
-  await esperar()
-  return especialidades
+  const supabase = await crearClienteServidor()
+  return revisar(await supabase.from('especialidades').select('id, nombre, icono, descripcion').order('orden'))
 }
 
-// Solo devuelve fecha y hora de los turnos tomados (sin datos de otras personas),
-// porque esta información se le manda al navegador para marcar los horarios ocupados.
+// Solo fecha y hora de los turnos tomados (sin datos de otras personas)
 export async function obtenerHorariosOcupados() {
-  await esperar()
-  return turnos.map((t) => ({ fecha: t.fecha, hora: t.hora }))
+  const supabase = await crearClienteServidor()
+  const filas = revisar(await supabase.rpc('horarios_ocupados'))
+  return filas.map((t) => ({ fecha: t.fecha, hora: t.hora.slice(0, 5) }))
 }
