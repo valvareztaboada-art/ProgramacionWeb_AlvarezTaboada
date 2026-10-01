@@ -1,12 +1,13 @@
 'use client'
 
-// Client Component: usa useState, eventos y Supabase Auth.
+// Client Component: usa el hook useFormulario, eventos y Supabase Auth.
 // Crea la cuenta (siempre con rol "cliente": lo decide la base de datos)
 // y Supabase le manda un email para confirmarla.
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Campo from './Campo'
+import { useFormulario } from '@/hooks/useFormulario'
 import { validarRegistro } from '@/lib/validaciones'
 import { crearClienteNavegador } from '@/lib/supabase/navegador'
 import { mensajeDeError } from '@/lib/supabase/mensajes'
@@ -14,50 +15,47 @@ import { mensajeDeError } from '@/lib/supabase/mensajes'
 const VACIO = { nombre: '', email: '', telefono: '', password: '', confirmar: '' }
 
 function FormularioRegistro() {
-  const [datos, setDatos] = useState(VACIO)
-  const [errores, setErrores] = useState({})
+  const { datos, errores, handleChange, validarAlEnviar } = useFormulario(VACIO, validarRegistro)
   const [errorGeneral, setErrorGeneral] = useState('')
   const [cargando, setCargando] = useState(false)
   const [enviado, setEnviado] = useState(false)
   const router = useRouter()
 
-  // Un solo handler para todos los inputs: usa el "name" del input
-  function handleChange(e) {
-    setDatos({ ...datos, [e.target.name]: e.target.value })
-  }
-
   async function handleSubmit(e) {
     e.preventDefault()
     setErrorGeneral('')
-    const nuevosErrores = validarRegistro(datos)
-    setErrores(nuevosErrores)
-    if (Object.keys(nuevosErrores).length > 0) return
+    if (!validarAlEnviar()) return
 
     setCargando(true)
-    const { data, error } = await crearClienteNavegador().auth.signUp({
-      email: datos.email.trim().toLowerCase(),
-      password: datos.password,
-      options: {
-        // Estos datos los usa la base para crear el perfil (el rol NO se manda)
-        data: { nombre: datos.nombre.trim(), telefono: datos.telefono.trim() },
-        // A dónde vuelve después de tocar el link del email
-        emailRedirectTo: `${window.location.origin}/auth/confirmar`,
-      },
-    })
-    setCargando(false)
+    try {
+      const { data, error } = await crearClienteNavegador().auth.signUp({
+        email: datos.email.trim().toLowerCase(),
+        password: datos.password,
+        options: {
+          // Estos datos los usa la base para crear el perfil (el rol NO se manda)
+          data: { nombre: datos.nombre.trim(), telefono: datos.telefono.trim() },
+          // A dónde vuelve después de tocar el link del email
+          emailRedirectTo: `${window.location.origin}/auth/confirmar`,
+        },
+      })
 
-    if (error) {
+      if (error) {
+        setErrorGeneral(mensajeDeError(error))
+        return
+      }
+
+      // Si el proyecto no pide confirmar el email, ya queda la sesión iniciada
+      if (data.session) {
+        router.push('/cliente')
+        router.refresh()
+        return
+      }
+      setEnviado(true)
+    } catch (error) {
       setErrorGeneral(mensajeDeError(error))
-      return
+    } finally {
+      setCargando(false)
     }
-
-    // Si el proyecto no pide confirmar el email, ya queda la sesión iniciada
-    if (data.session) {
-      router.push('/cliente')
-      router.refresh()
-      return
-    }
-    setEnviado(true)
   }
 
   if (enviado) {
@@ -91,9 +89,10 @@ function FormularioRegistro() {
           aria-invalid={Boolean(errores.email)} aria-describedby="email-mensaje" />
       </Campo>
 
-      <Campo id="telefono" label="Teléfono (opcional)">
-        <input id="telefono" name="telefono" type="tel" autoComplete="tel"
-          value={datos.telefono} onChange={handleChange} />
+      <Campo id="telefono" label="Teléfono (opcional)" error={errores.telefono}>
+        <input id="telefono" name="telefono" type="tel" autoComplete="tel" placeholder="11 2345-6789"
+          value={datos.telefono} onChange={handleChange}
+          aria-invalid={Boolean(errores.telefono)} aria-describedby="telefono-mensaje" />
       </Campo>
 
       <Campo id="password" label="Contraseña" error={errores.password} ayuda="Mínimo 8 caracteres.">

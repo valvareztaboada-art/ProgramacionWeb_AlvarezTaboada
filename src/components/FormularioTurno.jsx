@@ -11,11 +11,14 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import Campo from './Campo'
 import Icono from './Icono'
+import { useFormulario } from '@/hooks/useFormulario'
 import { validarTurno } from '@/lib/validaciones'
 import { hoyISO, horariosDelDia } from '@/lib/horarios'
 import { formatearFecha } from '@/lib/formato'
 import { crearClienteNavegador } from '@/lib/supabase/navegador'
-import { mensajeDeError } from '@/lib/supabase/mensajes'
+import { mensajeDeError, SESION_VENCIDA } from '@/lib/supabase/mensajes'
+
+const MAXIMO_COMENTARIO = 300
 
 function FormularioTurno({ mascotas, especialidades, ocupados }) {
   // Si tiene una sola mascota, ya viene elegida
@@ -27,8 +30,10 @@ function FormularioTurno({ mascotas, especialidades, ocupados }) {
     comentario: '',
   }
 
-  const [datos, setDatos] = useState(vacio)
-  const [errores, setErrores] = useState({})
+  const [hoy, setHoy] = useState('')
+  // La función de validación necesita "hoy" para no aceptar días pasados
+  const { datos, errores, handleChange, cambiar, validarAlEnviar, reiniciar } =
+    useFormulario(vacio, (valores) => validarTurno(valores, hoy))
   const [errorGeneral, setErrorGeneral] = useState('')
   const [cargando, setCargando] = useState(false)
   const [enviado, setEnviado] = useState(false)
@@ -37,7 +42,6 @@ function FormularioTurno({ mascotas, especialidades, ocupados }) {
   // La fecha de hoy se calcula en el navegador (useEffect solo corre ahí).
   // Si la calculáramos durante el render, el servidor y el navegador podrían
   // obtener días distintos y React mostraría un error de "hydration".
-  const [hoy, setHoy] = useState('')
   useEffect(() => {
     // Acá sí corresponde un efecto: sincroniza con algo externo a React (el reloj del navegador)
     // oxlint-disable-next-line react/set-state-in-effect
@@ -48,48 +52,56 @@ function FormularioTurno({ mascotas, especialidades, ocupados }) {
   const mascotaElegida = mascotas.find((m) => String(m.id) === datos.mascotaId)
   const especialidadElegida = especialidades.find((esp) => esp.id === datos.especialidad)
 
-  function handleChange(e) {
-    const { name, value } = e.target
-    // Si cambia el día, el horario elegido antes ya no sirve
-    if (name === 'fecha') {
-      setDatos({ ...datos, fecha: value, hora: '' })
-    } else {
-      setDatos({ ...datos, [name]: value })
-    }
+  // Si cambia el día, el horario elegido antes ya no sirve
+  function handleCambioDeFecha(e) {
+    cambiar({ fecha: e.target.value, hora: '' })
   }
 
   async function handleSubmit(e) {
     e.preventDefault()
     setErrorGeneral('')
-    const nuevosErrores = validarTurno(datos, hoy)
-    setErrores(nuevosErrores)
-    if (Object.keys(nuevosErrores).length > 0) return
+    if (!validarAlEnviar()) return
 
     setCargando(true)
-    const supabase = crearClienteNavegador()
-    const { data: { user } } = await supabase.auth.getUser()
-    const { error } = await supabase.from('turnos').insert({
-      mascota_id: Number(datos.mascotaId),
-      especialidad_id: datos.especialidad,
-      fecha: datos.fecha,
-      hora: datos.hora,
-      motivo: datos.comentario.trim() || null,
-      creado_por: user.id,
-    })
-    setCargando(false)
+    try {
+      const supabase = crearClienteNavegador()
 
-    if (error) {
+      // Si la sesión venció mientras completaba el formulario, avisamos en vez de fallar
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        setErrorGeneral(SESION_VENCIDA)
+        return
+      }
+
+      const { error } = await supabase.from('turnos').insert({
+        mascota_id: Number(datos.mascotaId),
+        especialidad_id: datos.especialidad,
+        fecha: datos.fecha,
+        hora: datos.hora,
+        motivo: datos.comentario.trim() || null,
+        creado_por: user.id,
+      })
+
+      if (error) {
+        setErrorGeneral(mensajeDeError(error))
+        if (error.code === '23505') {
+          // Alguien tomó ese horario recién: lo desmarcamos y actualizamos los ocupados
+          cambiar({ hora: '' })
+          router.refresh()
+        }
+        return
+      }
+      setEnviado(true)
+      router.refresh()
+    } catch (error) {
       setErrorGeneral(mensajeDeError(error))
-      router.refresh() // por si el horario se ocupó: actualiza la lista de ocupados
-      return
+    } finally {
+      setCargando(false)
     }
-    setEnviado(true)
-    router.refresh()
   }
 
   function pedirOtro() {
-    setDatos(vacio)
-    setErrores({})
+    reiniciar()
     setErrorGeneral('')
     setEnviado(false)
   }
@@ -156,7 +168,7 @@ function FormularioTurno({ mascotas, especialidades, ocupados }) {
         <Campo id="fecha" label="Día" error={errores.fecha}
           ayuda="Atendemos de lunes a viernes de 9 a 18 h y sábados de 9 a 13 h.">
           <input id="fecha" name="fecha" type="date" min={hoy}
-            value={datos.fecha} onChange={handleChange}
+            value={datos.fecha} onChange={handleCambioDeFecha}
             aria-invalid={Boolean(errores.fecha)} aria-describedby="fecha-mensaje" />
         </Campo>
 
@@ -183,10 +195,12 @@ function FormularioTurno({ mascotas, especialidades, ocupados }) {
       </fieldset>
 
       {/* 4. Comentario */}
-      <Campo id="comentario" label="¿Algo que tengamos que saber? (opcional)">
-        <textarea id="comentario" name="comentario" rows="3"
+      <Campo id="comentario" label="¿Algo que tengamos que saber? (opcional)" error={errores.comentario}
+        ayuda={`${datos.comentario.length}/${MAXIMO_COMENTARIO} caracteres`}>
+        <textarea id="comentario" name="comentario" rows="3" maxLength={MAXIMO_COMENTARIO}
           placeholder="Ej: está comiendo poco desde hace unos días"
-          value={datos.comentario} onChange={handleChange} />
+          value={datos.comentario} onChange={handleChange}
+          aria-invalid={Boolean(errores.comentario)} aria-describedby="comentario-mensaje" />
       </Campo>
 
       {errorGeneral && <p className="form-error" role="alert">{errorGeneral}</p>}

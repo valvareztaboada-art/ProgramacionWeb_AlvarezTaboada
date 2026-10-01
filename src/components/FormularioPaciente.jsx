@@ -1,6 +1,6 @@
 'use client'
 
-// Client Component: usa useState y eventos (onChange, onSubmit).
+// Client Component: usa el hook useFormulario y eventos (onChange, onSubmit).
 // Inserta la mascota en Supabase. Solo funciona para la veterinaria:
 // el RLS rechaza el INSERT de cualquier otro usuario.
 
@@ -8,6 +8,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import Campo from './Campo'
+import { useFormulario } from '@/hooks/useFormulario'
 import { validarPaciente } from '@/lib/validaciones'
 import { crearClienteNavegador } from '@/lib/supabase/navegador'
 import { mensajeDeError } from '@/lib/supabase/mensajes'
@@ -15,45 +16,42 @@ import { mensajeDeError } from '@/lib/supabase/mensajes'
 const VACIO = { nombre: '', especie: '', raza: '', edad: '', emailDuenio: '' }
 
 function FormularioPaciente() {
-  const [datos, setDatos] = useState(VACIO)
-  const [errores, setErrores] = useState({})
+  const { datos, errores, handleChange, validarAlEnviar, reiniciar } = useFormulario(VACIO, validarPaciente)
   const [errorGeneral, setErrorGeneral] = useState('')
   const [cargando, setCargando] = useState(false)
   const [enviado, setEnviado] = useState(false)
   const router = useRouter()
 
-  function handleChange(e) {
-    setDatos({ ...datos, [e.target.name]: e.target.value })
-  }
-
   async function handleSubmit(e) {
     e.preventDefault()
     setErrorGeneral('')
-    const nuevosErrores = validarPaciente(datos)
-    setErrores(nuevosErrores)
-    if (Object.keys(nuevosErrores).length > 0) return
+    if (!validarAlEnviar()) return
 
     setCargando(true)
-    const { error } = await crearClienteNavegador().from('mascotas').insert({
-      nombre: datos.nombre.trim(),
-      especie: datos.especie,
-      raza: datos.raza.trim() || null,
-      edad: datos.edad === '' ? null : Number(datos.edad),
-      email_duenio: datos.emailDuenio.trim().toLowerCase(),
-    })
-    setCargando(false)
+    try {
+      const { error } = await crearClienteNavegador().from('mascotas').insert({
+        nombre: datos.nombre.trim(),
+        especie: datos.especie,
+        raza: datos.raza.trim() || null,
+        edad: datos.edad === '' ? null : Number(datos.edad),
+        email_duenio: datos.emailDuenio.trim().toLowerCase(),
+      })
 
-    if (error) {
+      if (error) {
+        setErrorGeneral(mensajeDeError(error))
+        return
+      }
+      setEnviado(true)
+      router.refresh()
+    } catch (error) {
       setErrorGeneral(mensajeDeError(error))
-      return
+    } finally {
+      setCargando(false)
     }
-    setEnviado(true)
-    router.refresh()
   }
 
   function cargarOtro() {
-    setDatos(VACIO)
-    setErrores({})
+    reiniciar()
     setErrorGeneral('')
     setEnviado(false)
   }
@@ -106,7 +104,7 @@ function FormularioPaciente() {
         </div>
 
         <Campo id="raza" label="Raza (opcional)">
-          <input id="raza" name="raza" type="text"
+          <input id="raza" name="raza" type="text" maxLength={40}
             value={datos.raza} onChange={handleChange} />
         </Campo>
       </fieldset>
