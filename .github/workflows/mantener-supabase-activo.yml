@@ -1,0 +1,41 @@
+# Mantiene activo el proyecto gratuito de Supabase.
+# Supabase pausa los proyectos gratis que pasan 7 días sin consultas a la base de datos.
+# Este workflow hace una consulta chiquita (lee la tabla pública "especialidades")
+# dos veces por semana, así el proyecto nunca llega a los 7 días sin actividad.
+#
+# Necesita dos "secrets" en GitHub (Settings → Secrets and variables → Actions):
+#   SUPABASE_URL              → la misma URL que NEXT_PUBLIC_SUPABASE_URL
+#   SUPABASE_PUBLISHABLE_KEY  → la misma clave que NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+
+name: Mantener Supabase activo
+
+on:
+  schedule:
+    # Lunes y jueves a las 12:00 UTC (9:00 en Argentina). Formato cron: minuto hora día mes día-de-semana
+    - cron: '0 12 * * 1,4'
+  # Permite correrlo a mano desde la pestaña Actions (botón "Run workflow")
+  workflow_dispatch:
+
+jobs:
+  consultar:
+    name: Consultar la base de datos
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+
+    steps:
+      - name: Hacer una consulta a Supabase
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_PUBLISHABLE_KEY" ]; then
+            echo "::error::Faltan los secrets SUPABASE_URL y/o SUPABASE_PUBLISHABLE_KEY"
+            exit 1
+          fi
+
+          # --fail hace que el paso falle (y GitHub te avise por mail) si Supabase no responde bien
+          respuesta=$(curl --silent --show-error --fail --max-time 30 \
+            "$SUPABASE_URL/rest/v1/especialidades?select=id&limit=1" \
+            -H "apikey: $SUPABASE_PUBLISHABLE_KEY")
+
+          echo "Supabase respondió: $respuesta"
