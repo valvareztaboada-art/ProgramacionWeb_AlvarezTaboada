@@ -671,3 +671,7 @@ address { font-style: normal; line-height: 1.9; }
 
 /* Notificación de un pago duplicado (hay que devolver la plata) */
 .tabla tr.fila-alerta td { background: #fdf1ef; color: #8f1d14; font-weight: 700; }
+
+/* Aviso de un intento de pago rechazado */
+.aviso-rechazo { margin-top: 0.4rem; font-size: 0.88rem; font-weight: 700; color: #8f1d14; }
+.aviso-rechazo::before { content: '⚠ '; }
