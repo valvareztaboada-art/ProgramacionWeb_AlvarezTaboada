@@ -133,3 +133,23 @@ export async function obtenerHorariosOcupados() {
   const filas = revisar(await supabase.rpc('horarios_ocupados'))
   return filas.map((t) => ({ fecha: t.fecha, hora: t.hora.slice(0, 5) }))
 }
+
+// Un pago (null si no existe o no es del usuario: RLS)
+export async function obtenerPago(id) {
+  if (!/^\d+$/.test(String(id))) return null
+  const supabase = await crearClienteServidor()
+  const fila = revisar(await supabase.from('pagos').select('*, mascotas(nombre, email_duenio)').eq('id', id).maybeSingle())
+  if (!fila) return null
+  const [pago] = await conMascota(supabase, [fila])
+  return pago
+}
+
+// Últimas notificaciones de Mercado Pago (solo las ve la veterinaria: RLS)
+export async function obtenerEventosDePago({ limite = 15 } = {}) {
+  const supabase = await crearClienteServidor()
+  return revisar(await supabase
+    .from('pagos_eventos')
+    .select('id, pago_id, mp_payment_id, mp_estado, monto, resultado, recibido_en')
+    .order('recibido_en', { ascending: false })
+    .limit(limite))
+}

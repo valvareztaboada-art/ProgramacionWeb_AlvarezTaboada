@@ -124,6 +124,6 @@ Todo está en [`supabase/migrations`](supabase/migrations) y los datos de ejempl
 - [x] Migrar a Next.js (App Router)
 - [x] Base de datos con Supabase
 - [x] Login real y roles (dueño / veterinaria)
-- [ ] Pagos con Mercado Pago
+- [x] Pagos con Mercado Pago (Checkout Pro + webhooks firmados) — ver [docs/pruebas-mercado-pago.md](docs/pruebas-mercado-pago.md)
 - [ ] Tests con Playwright
 - [x] CI/CD con GitHub Actions

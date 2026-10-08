@@ -55,5 +55,6 @@ export async function proxy(request) {
 
 export const config = {
   // No hace falta correr el proxy para archivos estáticos (JS, CSS, imágenes)
-  matcher: ['/((?!_next/static|_next/image|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)'],
+  // ni para el webhook de Mercado Pago (no tiene sesión: se protege con la firma)
+  matcher: ['/((?!api/webhooks|_next/static|_next/image|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)'],
 }

@@ -84,3 +84,22 @@ export function validarTurno({ mascotaId, especialidad, fecha, hora, comentario 
     comentario: comentario.length > 300 ? 'El comentario puede tener hasta 300 caracteres.' : null,
   })
 }
+
+export function validarCobro({ mascotaId, concepto, monto }) {
+  const conceptoLimpio = concepto.trim()
+  const montoNumero = Number(String(monto).replace(',', '.'))
+
+  return sinVacios({
+    mascotaId: mascotaId === '' ? 'Elegí el paciente.' : null,
+    concepto:
+      conceptoLimpio.length < 3 ? 'Escribí el concepto (ej: Consulta de control).'
+      : conceptoLimpio.length > 80 ? 'El concepto puede tener hasta 80 caracteres.'
+      : null,
+    monto:
+      String(monto).trim() === '' ? 'Ingresá el monto.'
+      : !Number.isFinite(montoNumero) || montoNumero <= 0 ? 'El monto tiene que ser mayor a 0.'
+      : montoNumero > 10000000 ? 'El monto es demasiado alto.'
+      : !/^\d+([.,]\d{1,2})?$/.test(String(monto).trim()) ? 'Usá hasta 2 decimales (ej: 15000 o 15000,50).'
+      : null,
+  })
+}
