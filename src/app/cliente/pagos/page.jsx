@@ -29,6 +29,12 @@ export default async function MisPagos() {
               <div>
                 <strong>{p.concepto}</strong>
                 <p className="texto-suave">{p.mascota} · ${Number(p.monto).toLocaleString('es-AR')}</p>
+                {/* mp_estado guarda cómo terminó el último intento en Mercado Pago */}
+                {p.estado === 'pendiente' && (p.mp_estado === 'rejected' || p.mp_estado === 'cancelled') && (
+                  <p className="aviso-rechazo" role="status">
+                    Tu último intento de pago fue rechazado. No se te cobró nada: probá de nuevo con otro medio de pago.
+                  </p>
+                )}
               </div>
               {p.estado === 'pendiente'
                 ? <BotonPagar pagoId={p.id} monto={p.monto} />
