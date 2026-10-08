@@ -79,3 +79,21 @@ Siempre con un **comprador de prueba**, en una ventana de incógnito. Tarjetas d
 | 5 | Notificación de prueba del panel ("Simular") | — | En los logs de Vercel: firma válida → "El pago no existe en Mercado Pago" (200) |
 | 6 | Cliente intenta pagar un cobro ya pagado | — | No aparece el botón; si fuerza la API: `409` |
 | 7 | La veterinaria crea un cobro nuevo | — | El dueño/a lo ve en "Pagos → Para pagar" |
+
+## Conciliación activa (respaldo del webhook)
+
+Si un webhook no llega (configuración incorrecta, caída, demora), el cobro quedaría "pendiente"
+aunque el cliente haya pagado, y podría pagar dos veces. Por eso, al abrir **Pagos** (cliente),
+**Resultado del pago** o **Cobros** (veterinaria), el servidor busca en Mercado Pago
+(`GET /v1/payments/search?external_reference=mican-pago-<id>`) los pagos de los cobros que se
+intentaron pagar y los aplica con la **misma** función `registrar_pago_mp`.
+
+- Los datos salen de la API de Mercado Pago (con nuestro Access Token), no del navegador.
+- Solo se consultan cobros que el usuario ya puede ver (RLS).
+- La función reconoce un pago ya procesado (mismo pago y estado) y no lo registra dos veces.
+- Si el cliente pagó dos veces el mismo cobro, la notificación queda marcada como
+  **PAGO DUPLICADO** (en rojo en Cobros) para que la veterinaria lo devuelva.
+
+**Caso real que lo motivó:** los pagos de prueba de Mercado Pago llegan con `live_mode: true`, así que
+Mercado Pago los avisa a la URL de webhook de **modo productivo**. Con solo la de "modo prueba"
+configurada, los webhooks nunca salían. La conciliación concilió esos pagos igual.

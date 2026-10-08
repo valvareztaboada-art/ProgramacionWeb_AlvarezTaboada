@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import { validarFirmaWebhook, armarManifiesto, calcularFirma, leerCabeceraDeFirma } from '../src/lib/mercadopago/firma.js'
 import { armarPreferencia, referenciaExterna, pagoIdDesdeReferencia } from '../src/lib/mercadopago/preferencia.js'
 import { procesarNotificacionDePago } from '../src/lib/mercadopago/webhook.js'
+import { conciliarPago, necesitaConciliar } from '../src/lib/mercadopago/conciliacion.js'
 
 const SECRETO = 'secreto-de-prueba'
 const REQUEST_ID = 'bb56a2f1-6aae-46ac-982e-9dcd3581d08e'
@@ -124,4 +125,42 @@ test('webhook: ignora (sin reintentos) pagos inexistentes, ajenos a MICAN o en o
     assert.equal(r.ok, true)
     assert.equal(r.reintentar, false)
   }
+})
+
+// ---------- Conciliación activa ----------
+
+test('conciliación: solo consulta cobros abiertos que ya se intentaron pagar', () => {
+  assert.equal(necesitaConciliar({ estado: 'pendiente', mp_preference_id: 'pref' }), true)
+  assert.equal(necesitaConciliar({ estado: 'en_proceso', mp_preference_id: 'pref' }), true)
+  assert.equal(necesitaConciliar({ estado: 'pendiente', mp_preference_id: null }), false)
+  assert.equal(necesitaConciliar({ estado: 'pagado', mp_preference_id: 'pref' }), false)
+})
+
+test('conciliación: busca por external_reference y aplica los pagos del más viejo al más nuevo', async () => {
+  const registrados = []
+  let referenciaBuscada
+  const huboCambios = await conciliarPago(6, {
+    buscarPagos: async (ref) => {
+      referenciaBuscada = ref
+      return [
+        { id: 3, status: 'approved', date_created: '2026-10-08T14:00:08Z', transaction_amount: 1200, currency_id: 'ARS' },
+        { id: 1, status: 'rejected', date_created: '2026-10-08T13:58:00Z', transaction_amount: 1200, currency_id: 'ARS' },
+        { id: 2, status: 'approved', date_created: '2026-10-08T13:59:00Z', transaction_amount: 1200, currency_id: 'USD' },
+      ]
+    },
+    registrarPago: async (datos) => { registrados.push(datos.paymentId + ':' + datos.estado); return 'actualizado: pendiente → pagado' },
+  })
+  assert.equal(referenciaBuscada, 'mican-pago-6')
+  assert.deepEqual(registrados, ['1:rejected', '3:approved']) // el de USD se ignora
+  assert.equal(huboCambios, true)
+})
+
+test('conciliación: si no hay pagos o nada cambió, avisa que no hubo cambios', async () => {
+  const sinPagos = await conciliarPago(6, { buscarPagos: async () => [], registrarPago: async () => assert.fail() })
+  const yaProcesado = await conciliarPago(6, {
+    buscarPagos: async () => [{ id: 1, status: 'approved', date_created: 'x', transaction_amount: 1, currency_id: 'ARS' }],
+    registrarPago: async () => 'sin cambios: notificación ya procesada',
+  })
+  assert.equal(sinPagos, false)
+  assert.equal(yaProcesado, false)
 })

@@ -57,3 +57,22 @@ export async function obtenerPagoMP(paymentId) {
   if (!respuesta.ok) throw new Error(`Mercado Pago respondió ${respuesta.status} al consultar el pago ${paymentId}`)
   return respuesta.json()
 }
+
+// GET /v1/payments/search?external_reference=... → todos los pagos de un cobro de MICAN
+// (puede haber varios: un intento rechazado y después uno aprobado, por ejemplo)
+export async function buscarPagosPorReferencia(referencia) {
+  const parametros = new URLSearchParams({
+    external_reference: referencia,
+    sort: 'date_created',
+    criteria: 'asc',
+    limit: '20',
+  })
+  const respuesta = await fetch(`${API}/v1/payments/search?${parametros}`, {
+    headers: { Authorization: `Bearer ${accessToken()}` },
+    signal: AbortSignal.timeout(6000),
+    cache: 'no-store',
+  })
+  if (!respuesta.ok) throw new Error(`Mercado Pago respondió ${respuesta.status} al buscar ${referencia}`)
+  const { results } = await respuesta.json()
+  return results ?? []
+}

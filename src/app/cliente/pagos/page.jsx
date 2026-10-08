@@ -2,13 +2,17 @@ import PageHeader from '@/components/PageHeader'
 import Badge from '@/components/Badge'
 import BotonPagar from '@/components/BotonPagar'
 import { obtenerPagos } from '@/lib/datos'
+import { conciliarCobros } from '@/lib/mercadopago/conciliar'
 
 export const metadata = { title: 'Pagos' }
 
 const formatoFecha = new Intl.DateTimeFormat('es-AR', { dateStyle: 'medium', timeZone: 'America/Argentina/Buenos_Aires' })
 
 export default async function MisPagos() {
-  const pagos = await obtenerPagos()
+  let pagos = await obtenerPagos()
+  // Si algún cobro se intentó pagar, le preguntamos a Mercado Pago cómo terminó
+  // (por si el webhook todavía no llegó). Si algo cambió, volvemos a leer.
+  if (await conciliarCobros(pagos)) pagos = await obtenerPagos()
   const pendientes = pagos.filter((p) => p.estado === 'pendiente' || p.estado === 'en_proceso')
   const historial = pagos.filter((p) => !pendientes.includes(p))
 
