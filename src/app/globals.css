@@ -420,6 +420,18 @@ strong { font-weight: 800; }
 .badge-atendido { background: #dcefdc; color: #1f5f2a; }
 .badge-ausente { background: #fbe0dd; color: #8f1d14; }
 .badge-cancelado { background: #ebe7e0; color: #5a5650; text-decoration: line-through; }
+.badge-en_proceso { background: #fff3c4; color: #6b5300; }
+.badge-reembolsado { background: #ebe7e0; color: #5a5650; }
+
+/* Resultado de un pago (vuelta desde Mercado Pago) */
+.resultado-pago { display: flex; flex-direction: column; gap: 0.8rem; max-width: 620px; border-top: 6px solid var(--durazno); }
+.resultado-pago h2 { margin: 0; color: var(--color-panel); }
+.resultado-pagado { border-top-color: #4caf50; }
+.resultado-en_proceso { border-top-color: var(--mostaza); }
+.esperando { display: flex; align-items: center; gap: 0.6rem; }
+.puntito { width: 12px; height: 12px; border-radius: 50%; background: var(--mostaza); animation: latir 1s ease-in-out infinite; }
+@keyframes latir { 50% { transform: scale(1.5); opacity: 0.5; } }
+.tabla code { font-size: 0.85rem; background: var(--crema); padding: 0.1rem 0.4rem; border-radius: 6px; }
 
 /* Acciones sobre turnos */
 .lista-item-derecha { display: flex; flex-direction: column; align-items: flex-end; gap: 0.5rem; text-align: right; }

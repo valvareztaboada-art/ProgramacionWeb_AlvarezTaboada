@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { validarLogin, validarRegistro, validarPaciente, validarTurno } from '../src/lib/validaciones.js'
+import { validarLogin, validarRegistro, validarPaciente, validarTurno, validarCobro } from '../src/lib/validaciones.js'
 
 const HOY = '2026-09-24'
 
@@ -77,4 +77,14 @@ test('paciente: la edad tiene que ser un número entero', () => {
 test('turno: el comentario no puede ser demasiado largo', () => {
   const datos = { mascotaId: '1', especialidad: 'consulta', fecha: '2026-09-28', hora: '10:00', comentario: 'x'.repeat(301) }
   assert.deepEqual(Object.keys(validarTurno(datos, HOY)), ['comentario'])
+})
+
+test('cobro: pide paciente, concepto y un monto válido', () => {
+  assert.deepEqual(Object.keys(validarCobro({ mascotaId: '', concepto: '', monto: '' })).sort(), ['concepto', 'mascotaId', 'monto'])
+  assert.deepEqual(validarCobro({ mascotaId: '1', concepto: 'Consulta', monto: '15000' }), {})
+  assert.deepEqual(validarCobro({ mascotaId: '1', concepto: 'Consulta', monto: '15000,50' }), {})
+  assert.ok(validarCobro({ mascotaId: '1', concepto: 'Consulta', monto: '0' }).monto)
+  assert.ok(validarCobro({ mascotaId: '1', concepto: 'Consulta', monto: '-5' }).monto)
+  assert.ok(validarCobro({ mascotaId: '1', concepto: 'Consulta', monto: '10.555' }).monto)
+  assert.ok(validarCobro({ mascotaId: '1', concepto: 'Consulta', monto: 'mil' }).monto)
 })

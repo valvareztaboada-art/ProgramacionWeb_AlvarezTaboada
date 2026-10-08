@@ -10,6 +10,8 @@ import { PGlite } from '@electric-sql/pglite'
 const VET = '00000000-0000-0000-0000-000000000001'
 const ANA = '00000000-0000-0000-0000-000000000002'
 const JUAN_SIN_CONFIRMAR = '00000000-0000-0000-0000-000000000003'
+// El "servidor" (Route Handlers con la clave secreta): rol service_role de Supabase
+const SERVIDOR = 'servidor'
 
 let db
 let proximoLunes
@@ -22,6 +24,7 @@ before(async () => {
   await db.exec(`
     create role anon nologin;
     create role authenticated nologin;
+    create role service_role nologin bypassrls;
     create schema auth;
     create table auth.users (
       id uuid primary key,
@@ -31,10 +34,10 @@ before(async () => {
     );
     create function auth.uid() returns uuid language sql stable as
       $$ select nullif(current_setting('request.jwt.claim.sub', true), '')::uuid $$;
-    grant usage on schema public, auth to anon, authenticated;
+    grant usage on schema public, auth to anon, authenticated, service_role;
     grant execute on function auth.uid() to anon, authenticated;
-    alter default privileges in schema public grant all on tables to anon, authenticated;
-    alter default privileges in schema public grant all on sequences to anon, authenticated;
+    alter default privileges in schema public grant all on tables to anon, authenticated, service_role;
+    alter default privileges in schema public grant all on sequences to anon, authenticated, service_role;
     alter default privileges in schema public grant execute on functions to anon, authenticated;
   `)
 
@@ -63,8 +66,8 @@ before(async () => {
 // Ejecuta una consulta "logueado" como un usuario (o como anónimo si es null)
 async function como(usuario, sql, params = []) {
   await db.exec('reset role')
-  await db.query(`select set_config('request.jwt.claim.sub', $1, false)`, [usuario ?? ''])
-  await db.exec(usuario ? 'set role authenticated' : 'set role anon')
+  await db.query(`select set_config('request.jwt.claim.sub', $1, false)`, [usuario && usuario !== SERVIDOR ? usuario : ''])
+  await db.exec(usuario === SERVIDOR ? 'set role service_role' : usuario ? 'set role authenticated' : 'set role anon')
   try {
     return { filas: (await db.query(sql, params)).rows }
   } catch (e) {
@@ -191,4 +194,81 @@ test('la veterinaria marca un turno como ausente y carga pacientes', async () =>
   assert.equal(ausente.filas[0].estado, 'ausente')
   const nueva = await como(VET, `insert into mascotas (nombre, especie, edad, email_duenio) values ('Toby', 'Perro', 3, 'marta@mail.com') returning id`)
   assert.equal(nueva.filas.length, 1)
+})
+
+// ---------- Mercado Pago ----------
+
+const idDePago = async (concepto) => (await db.query('select id from pagos where concepto = $1', [concepto])).rows[0].id
+const estadoDePago = async (id) => (await db.query('select estado, mp_payment_id from pagos where id = $1', [id])).rows[0]
+
+function registrar(usuario, pagoId, paymentId, estado, monto) {
+  return como(usuario, 'select registrar_pago_mp($1, $2, $3, $4) as resultado', [pagoId, paymentId, estado, monto])
+}
+
+test('mercado pago: ni el cliente ni la veterinaria pueden marcar un pago como acreditado desde el navegador', async () => {
+  const id = await idDePago('Consulta Luna')
+  assert.match((await registrar(ANA, id, '111', 'approved', 25000)).error, /permission denied/)
+  assert.match((await registrar(VET, id, '111', 'approved', 25000)).error, /permission denied/)
+  const directo = await como(ANA, `update pagos set estado = 'pagado' where id = ${id} returning id`)
+  assert.equal(directo.filas.length, 0)
+  assert.equal((await estadoDePago(id)).estado, 'pendiente')
+})
+
+test('mercado pago: un pago rechazado deja el cobro pendiente (se puede volver a intentar)', async () => {
+  const id = await idDePago('Consulta Luna')
+  const r = await registrar(SERVIDOR, id, '100', 'rejected', 25000)
+  assert.match(r.filas[0].resultado, /actualizado/)
+  assert.equal((await estadoDePago(id)).estado, 'pendiente')
+})
+
+test('mercado pago: si el monto no coincide, NO se da por pagado', async () => {
+  const id = await idDePago('Consulta Luna')
+  const r = await registrar(SERVIDOR, id, '101', 'approved', 1)
+  assert.match(r.filas[0].resultado, /rechazado: monto/)
+  assert.equal((await estadoDePago(id)).estado, 'pendiente')
+})
+
+test('mercado pago: en proceso → aprobado, y los avisos repetidos o viejos no lo cambian', async () => {
+  const id = await idDePago('Consulta Luna')
+  await registrar(SERVIDOR, id, '102', 'in_process', 25000)
+  assert.equal((await estadoDePago(id)).estado, 'en_proceso')
+
+  const aprobado = await registrar(SERVIDOR, id, '102', 'approved', 25000)
+  assert.match(aprobado.filas[0].resultado, /en_proceso → pagado/)
+  assert.deepEqual(await estadoDePago(id), { estado: 'pagado', mp_payment_id: '102' })
+
+  const repetido = await registrar(SERVIDOR, id, '102', 'approved', 25000)
+  assert.match(repetido.filas[0].resultado, /ya estaba acreditado/)
+  const viejo = await registrar(SERVIDOR, id, '102', 'pending', 25000)
+  assert.match(viejo.filas[0].resultado, /ya estaba acreditado/)
+  assert.equal((await estadoDePago(id)).estado, 'pagado')
+})
+
+test('mercado pago: un reembolso cambia un pago acreditado a reembolsado', async () => {
+  const id = await idDePago('Consulta Luna')
+  await registrar(SERVIDOR, id, '102', 'refunded', 25000)
+  assert.equal((await estadoDePago(id)).estado, 'reembolsado')
+})
+
+test('mercado pago: un pago que no existe se ignora sin romper', async () => {
+  const r = await registrar(SERVIDOR, 999999, '103', 'approved', 100)
+  assert.match(r.filas[0].resultado, /no existe/)
+})
+
+test('mercado pago: cada notificación queda registrada y solo la ve la veterinaria', async () => {
+  const vet = await como(VET, 'select count(*)::int as n from pagos_eventos')
+  assert.ok(vet.filas[0].n >= 6)
+  const cliente = await como(ANA, 'select count(*)::int as n from pagos_eventos')
+  assert.equal(cliente.filas[0].n, 0)
+})
+
+test('mercado pago: el cliente guarda la preferencia solo de SUS cobros pendientes', async () => {
+  const michi = await idDePago('Ecografía Michi')
+  assert.equal((await como(ANA, `select guardar_preferencia_mp(${michi}, 'pref-1')`)).error, undefined)
+
+  const rocco = await idDePago('Radiografía Rocco') // de otro dueño (y ya pagado)
+  assert.match((await como(ANA, `select guardar_preferencia_mp(${rocco}, 'pref-2')`)).error, /No se puede pagar/)
+  const luna = await idDePago('Consulta Luna') // ya reembolsado
+  assert.match((await como(ANA, `select guardar_preferencia_mp(${luna}, 'pref-3')`)).error, /No se puede pagar/)
+  assert.match((await como(null, `select guardar_preferencia_mp(${michi}, 'pref-4')`)).error, /permission denied/)
 })
