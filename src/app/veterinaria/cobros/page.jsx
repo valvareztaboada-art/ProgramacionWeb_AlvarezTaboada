@@ -2,6 +2,7 @@ import Link from 'next/link'
 import PageHeader from '@/components/PageHeader'
 import Badge from '@/components/Badge'
 import { obtenerPagos, obtenerEventosDePago } from '@/lib/datos'
+import { conciliarCobros } from '@/lib/mercadopago/conciliar'
 
 export const metadata = { title: 'Cobros' }
 
@@ -13,6 +14,8 @@ const formatoFechaHora = new Intl.DateTimeFormat('es-AR', {
 const pesos = (monto) => `$${Number(monto).toLocaleString('es-AR')}`
 
 export default async function Cobros() {
+  // Primero conciliamos con Mercado Pago (por si algún webhook no llegó) y después leemos
+  await conciliarCobros(await obtenerPagos())
   const [pagos, eventos] = await Promise.all([obtenerPagos(), obtenerEventosDePago()])
   const totalPendiente = pagos
     .filter((p) => p.estado === 'pendiente' || p.estado === 'en_proceso')
@@ -75,7 +78,7 @@ export default async function Cobros() {
                 </thead>
                 <tbody>
                   {eventos.map((e) => (
-                    <tr key={e.id}>
+                    <tr key={e.id} className={e.resultado.includes('DUPLICADO') ? 'fila-alerta' : undefined}>
                       <td>{formatoFechaHora.format(new Date(e.recibido_en))}</td>
                       <td>{e.pago_id ? `#${e.pago_id}` : '—'}</td>
                       <td>{e.mp_payment_id}</td>

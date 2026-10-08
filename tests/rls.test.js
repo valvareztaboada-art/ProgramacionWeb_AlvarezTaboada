@@ -238,9 +238,14 @@ test('mercado pago: en proceso → aprobado, y los avisos repetidos o viejos no 
   assert.deepEqual(await estadoDePago(id), { estado: 'pagado', mp_payment_id: '102' })
 
   const repetido = await registrar(SERVIDOR, id, '102', 'approved', 25000)
-  assert.match(repetido.filas[0].resultado, /ya estaba acreditado/)
+  assert.match(repetido.filas[0].resultado, /notificación ya procesada/)
   const viejo = await registrar(SERVIDOR, id, '102', 'pending', 25000)
   assert.match(viejo.filas[0].resultado, /ya estaba acreditado/)
+
+  // El cliente pagó OTRA vez el mismo cobro (otro pago de Mercado Pago): queda marcado como duplicado
+  const duplicado = await registrar(SERVIDOR, id, '104', 'approved', 25000)
+  assert.match(duplicado.filas[0].resultado, /PAGO DUPLICADO/)
+  assert.deepEqual(await estadoDePago(id), { estado: 'pagado', mp_payment_id: '102' })
   assert.equal((await estadoDePago(id)).estado, 'pagado')
 })
 

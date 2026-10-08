@@ -668,3 +668,6 @@ address { font-style: normal; line-height: 1.9; }
   .sidebar ul a { white-space: nowrap; }
   .panel-contenido { padding: 1.25rem 1rem; }
 }
+
+/* Notificación de un pago duplicado (hay que devolver la plata) */
+.tabla tr.fila-alerta td { background: #fdf1ef; color: #8f1d14; font-weight: 700; }

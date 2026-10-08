@@ -4,6 +4,7 @@ import PageHeader from '@/components/PageHeader'
 import Badge from '@/components/Badge'
 import EsperandoConfirmacion from '@/components/EsperandoConfirmacion'
 import { obtenerPago } from '@/lib/datos'
+import { conciliarCobros } from '@/lib/mercadopago/conciliar'
 
 export const metadata = { title: 'Resultado del pago' }
 
@@ -13,8 +14,10 @@ export const metadata = { title: 'Resultado del pago' }
 // en NUESTRA base de datos, que actualiza el webhook (la URL se puede inventar).
 export default async function ResultadoDelPago({ searchParams }) {
   const parametros = await searchParams
-  const pago = await obtenerPago(parametros.pago)
+  let pago = await obtenerPago(parametros.pago)
   if (!pago) notFound()
+  // Le preguntamos a Mercado Pago por este cobro (no esperamos solo al webhook)
+  if (await conciliarCobros([pago])) pago = await obtenerPago(parametros.pago)
 
   const segunMercadoPago = parametros.collection_status ?? parametros.status
   const monto = `$${Number(pago.monto).toLocaleString('es-AR')}`
