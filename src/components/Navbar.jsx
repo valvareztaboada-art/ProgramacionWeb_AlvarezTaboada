@@ -9,9 +9,9 @@ function Navbar() {
     <header className="navbar">
       <Logo />
       <MenuDesplegable>
-        <EnlaceNav href="/" exacto>Inicio</EnlaceNav>
+        <Link href="/#nosotros">Nosotros</Link>
         <Link href="/#servicios">Servicios</Link>
-        <Link href="/#como-funciona">Cómo funciona</Link>
+        <Link href="/#opiniones">Opiniones</Link>
         <Link href="/#contacto">Contacto</Link>
         <EnlaceNav href="/registro">Registrarse</EnlaceNav>
         <Link href="/login" className="btn btn-primario">Ingresar</Link>
