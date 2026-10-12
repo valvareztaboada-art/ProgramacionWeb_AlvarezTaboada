@@ -27,6 +27,10 @@ export function mensajeDeError(error) {
   if (!error) return ''
   if (MENSAJES[error.code]) return MENSAJES[error.code]
   if (esErrorDeConexion(error)) return SIN_CONEXION
+  // Errores de Storage (subida de archivos)
+  if (/maximum allowed size/i.test(error.message ?? '')) return 'El archivo pesa más de 10 MB.'
+  if (/mime type/i.test(error.message ?? '')) return 'Ese tipo de archivo no está permitido. Subí un PDF o una imagen.'
+  if (/row-level security/i.test(error.message ?? '')) return MENSAJES['42501']
   // Los errores que lanzan nuestras funciones SQL (ej: la regla de las 24 h) ya vienen en castellano
   if (error.code === 'P0001' && error.message) return error.message
   return 'Ocurrió un error inesperado. Probá de nuevo en unos minutos.'

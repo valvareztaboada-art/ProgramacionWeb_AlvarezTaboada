@@ -3,6 +3,8 @@
 // Son funciones puras (no dependen de React), así que tienen tests en tests/validaciones.test.js.
 // La base de datos vuelve a controlar lo importante: nunca hay que confiar solo en el navegador.
 
+import { TAMANIO_MAXIMO, TIPOS_PERMITIDOS } from './archivos.js'
+
 const EMAIL_VALIDO = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
 const TIENE_LETRAS = /\p{L}/u
 const TELEFONO_VALIDO = /^[+\d\s()-]+$/
@@ -100,6 +102,30 @@ export function validarCobro({ mascotaId, concepto, monto }) {
       : !Number.isFinite(montoNumero) || montoNumero <= 0 ? 'El monto tiene que ser mayor a 0.'
       : montoNumero > 10000000 ? 'El monto es demasiado alto.'
       : !/^\d+([.,]\d{1,2})?$/.test(String(monto).trim()) ? 'Usá hasta 2 decimales (ej: 15000 o 15000,50).'
+      : null,
+  })
+}
+
+// archivo: { tipo, tamanio } del archivo elegido, o null si no eligió ninguno (es opcional)
+export function validarEstudio({ mascotaId, titulo, fecha, comentarios = '', archivo = null }, hoy) {
+  const tituloLimpio = titulo.trim()
+
+  return sinVacios({
+    mascotaId: mascotaId === '' ? 'Elegí el paciente.' : null,
+    titulo:
+      tituloLimpio.length < 3 ? 'Escribí un título (ej: Análisis de sangre).'
+      : tituloLimpio.length > 100 ? 'El título puede tener hasta 100 caracteres.'
+      : null,
+    fecha:
+      fecha === '' ? 'Indicá la fecha del estudio.'
+      : hoy && fecha > hoy ? 'La fecha no puede ser futura.'
+      : null,
+    comentarios: comentarios.length > 2000 ? 'Los comentarios pueden tener hasta 2000 caracteres.' : null,
+    archivo:
+      !archivo ? null
+      : !TIPOS_PERMITIDOS[archivo.tipo] ? 'Solo se pueden subir PDF o imágenes (JPG, PNG o WEBP).'
+      : archivo.tamanio > TAMANIO_MAXIMO ? 'El archivo pesa más de 10 MB. Probá comprimirlo o sacarle una foto.'
+      : archivo.tamanio === 0 ? 'El archivo está vacío.'
       : null,
   })
 }

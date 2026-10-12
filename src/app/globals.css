@@ -815,3 +815,24 @@ address { font-style: normal; line-height: 1.9; }
   .nosotros-circulo { width: 190px; height: 190px; }
   .nosotros-gato { width: 210px; }
 }
+
+/* ===== Estudios ===== */
+.estudio { display: flex; flex-direction: column; gap: 0.6rem; }
+.estudio-encabezado { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap; }
+.estudio-titulo { font-family: var(--fuente-titulos); font-weight: 600; font-size: 1.1rem; }
+.estudio-acciones { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.estudio-peso { font-weight: 400; opacity: 0.75; margin-left: 0.2rem; }
+/* white-space: pre-line respeta los saltos de línea que escribió la veterinaria */
+.estudio-comentarios {
+  white-space: pre-line;
+  background: var(--crema);
+  border-left: 4px solid var(--mostaza);
+  border-radius: 0 10px 10px 0;
+  padding: 0.6rem 0.9rem;
+  margin: 0;
+}
+.ficha-seccion-encabezado { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; margin-bottom: 0.9rem; }
+.ficha-seccion-encabezado h2 { margin: 0; }
+.archivo-actual { margin: 0.6rem 0 0; }
+.form input[type='file'] { background: var(--blanco); cursor: pointer; }
+.form select:disabled { opacity: 0.7; cursor: not-allowed; }

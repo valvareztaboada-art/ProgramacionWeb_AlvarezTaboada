@@ -99,6 +99,8 @@ Todo está en [`supabase/migrations`](supabase/migrations) y los datos de ejempl
 | Pedir turno | ✅ Para sus mascotas, a futuro, en horario de atención | ✅ |
 | Cancelar turno | ✅ Solo con **más de 24 h** (`cancelar_turno`) | ✅ Siempre |
 | Confirmar / marcar atendido o **ausente** | ❌ | ✅ |
+| Pagar un cobro | ✅ Con Mercado Pago (los suyos) | ✅ Marca "cobrado en efectivo" (`registrar_pago_efectivo`) |
+| Archivos de estudios (Storage, bucket privado) | 👀 Abre solo los de **sus** mascotas, con enlace temporal | ✅ Sube, reemplaza y edita |
 | Cambiarse el rol | ❌ (bloqueado por permisos de columna) | — |
 
 - Todos los que se registran son **clientes**; el rol `veterinaria` se asigna a mano.

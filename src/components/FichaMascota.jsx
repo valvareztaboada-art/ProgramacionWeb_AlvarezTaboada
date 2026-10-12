@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import Badge from './Badge'
 import AccionesTurno from './AccionesTurno'
+import TarjetaEstudio from './TarjetaEstudio'
 import { formatearEdad, formatearFecha } from '@/lib/formato'
 import { IlustracionMascota } from './ilustraciones/Ilustraciones'
 
@@ -68,15 +69,18 @@ function FichaMascota({ mascota, turnos, vacunas, estudios, volver, esVeterinari
         </section>
 
         <section>
-          <h2>Estudios</h2>
+          <div className="ficha-seccion-encabezado">
+            <h2>Estudios</h2>
+            {esVeterinaria && (
+              <Link href={`/veterinaria/estudios/nuevo?mascota=${mascota.id}`} className="btn btn-chico btn-primario">
+                + Subir estudio
+              </Link>
+            )}
+          </div>
           <ul className="lista">
             {estudios.map((e) => (
-              <li key={e.id} className="card lista-item">
-                <div>
-                  <strong>{e.tipo}</strong>
-                  <p className="texto-suave">{e.fecha}</p>
-                </div>
-              </li>
+              <TarjetaEstudio key={e.id} estudio={e} esVeterinaria={esVeterinaria}
+                volver={esVeterinaria ? `/veterinaria/pacientes/${mascota.id}` : ''} />
             ))}
           </ul>
           {estudios.length === 0 && <p className="texto-suave">Sin estudios cargados.</p>}

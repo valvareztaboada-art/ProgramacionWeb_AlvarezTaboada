@@ -1,6 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { validarLogin, validarRegistro, validarPaciente, validarTurno, validarCobro } from '../src/lib/validaciones.js'
+import { validarLogin, validarRegistro, validarPaciente, validarTurno, validarCobro, validarEstudio } from '../src/lib/validaciones.js'
+import { rutaDeArchivo, formatearTamanio } from '../src/lib/archivos.js'
 
 const HOY = '2026-09-24'
 
@@ -87,4 +88,37 @@ test('cobro: pide paciente, concepto y un monto válido', () => {
   assert.ok(validarCobro({ mascotaId: '1', concepto: 'Consulta', monto: '-5' }).monto)
   assert.ok(validarCobro({ mascotaId: '1', concepto: 'Consulta', monto: '10.555' }).monto)
   assert.ok(validarCobro({ mascotaId: '1', concepto: 'Consulta', monto: 'mil' }).monto)
+})
+
+const ESTUDIO = { mascotaId: '1', titulo: 'Análisis de sangre', fecha: '2026-09-20', comentarios: '' }
+
+test('estudio: datos completos y sin archivo (es opcional) no dan errores', () => {
+  assert.deepEqual(validarEstudio(ESTUDIO, HOY), {})
+})
+
+test('estudio: pide paciente, título y fecha, y la fecha no puede ser futura', () => {
+  assert.deepEqual(Object.keys(validarEstudio({ mascotaId: '', titulo: '', fecha: '' }, HOY)).sort(), ['fecha', 'mascotaId', 'titulo'])
+  assert.ok(validarEstudio({ ...ESTUDIO, fecha: '2026-12-31' }, HOY).fecha)
+})
+
+test('estudio: acepta PDF e imágenes de hasta 10 MB', () => {
+  assert.deepEqual(validarEstudio({ ...ESTUDIO, archivo: { tipo: 'application/pdf', tamanio: 500000 } }, HOY), {})
+  assert.deepEqual(validarEstudio({ ...ESTUDIO, archivo: { tipo: 'image/jpeg', tamanio: 10 * 1024 * 1024 } }, HOY), {})
+})
+
+test('estudio: rechaza otros tipos, archivos muy pesados o vacíos', () => {
+  assert.ok(validarEstudio({ ...ESTUDIO, archivo: { tipo: 'application/zip', tamanio: 100 } }, HOY).archivo)
+  assert.ok(validarEstudio({ ...ESTUDIO, archivo: { tipo: 'application/pdf', tamanio: 11 * 1024 * 1024 } }, HOY).archivo)
+  assert.ok(validarEstudio({ ...ESTUDIO, archivo: { tipo: 'application/pdf', tamanio: 0 } }, HOY).archivo)
+})
+
+test('archivos: la ruta empieza con la mascota y no usa el nombre original', () => {
+  assert.equal(rutaDeArchivo(12, 'application/pdf', 'abc-123'), '12/abc-123.pdf')
+  assert.equal(rutaDeArchivo(3, 'image/jpeg', 'x'), '3/x.jpg')
+})
+
+test('archivos: muestra el tamaño de forma legible', () => {
+  assert.equal(formatearTamanio(512), '512 B')
+  assert.equal(formatearTamanio(2048), '2 KB')
+  assert.equal(formatearTamanio(2411724), '2,3 MB')
 })
