@@ -43,14 +43,14 @@ cross join (values
 ) as v (mascota, vacuna, dias, aplicada)
 join public.mascotas m on m.nombre = v.mascota;
 
-insert into public.estudios (mascota_id, tipo, fecha)
-select m.id, e.tipo, f.lunes + e.dias
+insert into public.estudios (mascota_id, titulo, fecha, comentarios)
+select m.id, e.titulo, f.lunes + e.dias, e.comentarios
 from fechas f
 cross join (values
-  ('Luna',  'Análisis de sangre',    -40),
-  ('Rocco', 'Radiografía de cadera', -25),
-  ('Michi', 'Ecografía abdominal',   -18)
-) as e (mascota, tipo, dias)
+  ('Luna',  'Análisis de sangre',    -40, 'Valores normales. Repetir en un año.'),
+  ('Rocco', 'Radiografía de cadera', -25, 'Leve displasia. Control en 6 meses y mantener el peso.'),
+  ('Michi', 'Ecografía abdominal',   -18, 'Sin hallazgos relevantes.')
+) as e (mascota, titulo, dias, comentarios)
 join public.mascotas m on m.nombre = e.mascota;
 
 insert into public.pagos (mascota_id, concepto, monto, estado)

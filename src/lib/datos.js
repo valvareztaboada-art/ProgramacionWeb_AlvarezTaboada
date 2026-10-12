@@ -109,11 +109,39 @@ export async function obtenerVacunas({ mascotaId } = {}) {
   return conMascota(supabase, revisar(await consulta))
 }
 
+const UNA_HORA = 60 * 60
+
+// Agrega a cada estudio un enlace FIRMADO para abrir su archivo (vence en una hora).
+// Se pide con la sesión del usuario: Storage solo lo firma si el RLS lo deja verlo.
+async function conEnlaceAlArchivo(supabase, estudios) {
+  const rutas = estudios.map((e) => e.archivo_path).filter(Boolean)
+  if (rutas.length === 0) return estudios.map((e) => ({ ...e, archivoUrl: null }))
+
+  const { data } = await supabase.storage.from('estudios').createSignedUrls(rutas, UNA_HORA)
+  const enlaces = new Map((data ?? []).filter((d) => d.signedUrl).map((d) => [d.path, d.signedUrl]))
+  return estudios.map((e) => ({ ...e, archivoUrl: enlaces.get(e.archivo_path) ?? null }))
+}
+
 export async function obtenerEstudios({ mascotaId } = {}) {
   const supabase = await crearClienteServidor()
-  let consulta = supabase.from('estudios').select('*, mascotas(nombre, email_duenio)').order('fecha', { ascending: false })
+  let consulta = supabase
+    .from('estudios')
+    .select('*, mascotas(nombre, email_duenio)')
+    .order('fecha', { ascending: false })
+    .order('creado_en', { ascending: false })
   if (mascotaId) consulta = consulta.eq('mascota_id', mascotaId)
-  return conMascota(supabase, revisar(await consulta))
+  const estudios = await conMascota(supabase, revisar(await consulta))
+  return conEnlaceAlArchivo(supabase, estudios)
+}
+
+// Un estudio (null si no existe o el usuario no puede verlo: RLS)
+export async function obtenerEstudio(id) {
+  if (!/^\d+$/.test(String(id))) return null
+  const supabase = await crearClienteServidor()
+  const fila = revisar(await supabase.from('estudios').select('*, mascotas(nombre, email_duenio)').eq('id', id).maybeSingle())
+  if (!fila) return null
+  const [estudio] = await conEnlaceAlArchivo(supabase, await conMascota(supabase, [fila]))
+  return estudio
 }
 
 export async function obtenerPagos() {

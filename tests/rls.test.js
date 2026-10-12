@@ -39,6 +39,21 @@ before(async () => {
     alter default privileges in schema public grant all on tables to anon, authenticated, service_role;
     alter default privileges in schema public grant all on sequences to anon, authenticated, service_role;
     alter default privileges in schema public grant execute on functions to anon, authenticated;
+
+    -- Imitación mínima de Supabase Storage (carpetas = buckets, archivos = objects)
+    create schema storage;
+    create table storage.buckets (
+      id text primary key, name text not null, public boolean default false,
+      file_size_limit bigint, allowed_mime_types text[]
+    );
+    create table storage.objects (
+      id uuid primary key default gen_random_uuid(),
+      bucket_id text references storage.buckets (id), name text, owner uuid
+    );
+    alter table storage.objects enable row level security;
+    grant usage on schema storage to anon, authenticated, service_role;
+    grant all on storage.objects to anon, authenticated, service_role;
+    grant select on storage.buckets to anon, authenticated, service_role;
   `)
 
   const migraciones = readdirSync('supabase/migrations').filter((f) => f.endsWith('.sql')).sort()
@@ -276,4 +291,71 @@ test('mercado pago: el cliente guarda la preferencia solo de SUS cobros pendient
   const luna = await idDePago('Consulta Luna') // ya reembolsado
   assert.match((await como(ANA, `select guardar_preferencia_mp(${luna}, 'pref-3')`)).error, /No se puede pagar/)
   assert.match((await como(null, `select guardar_preferencia_mp(${michi}, 'pref-4')`)).error, /permission denied/)
+})
+
+// ---------- Pagos en efectivo ----------
+
+test('efectivo: el cliente NO puede marcar un cobro como pagado en efectivo', async () => {
+  const id = await idDePago('Ecografía Michi')
+  assert.match((await como(ANA, `select registrar_pago_efectivo(${id})`)).error, /Solo la veterinaria/)
+  assert.equal((await estadoDePago(id)).estado, 'pendiente')
+})
+
+test('efectivo: la veterinaria lo marca y queda pagado, con medio "efectivo" y fecha', async () => {
+  const id = await idDePago('Ecografía Michi')
+  assert.equal((await como(VET, `select registrar_pago_efectivo(${id})`)).error, undefined)
+  const { rows: [pago] } = await db.query('select estado, metodo, pagado_en from pagos where id = $1', [id])
+  assert.equal(pago.estado, 'pagado')
+  assert.equal(pago.metodo, 'efectivo')
+  assert.ok(pago.pagado_en)
+  // El dueño/a lo ve pagado
+  const visto = await como(ANA, `select estado from pagos where id = ${id}`)
+  assert.equal(visto.filas[0].estado, 'pagado')
+})
+
+test('efectivo: no se puede marcar dos veces, y un pago por Mercado Pago posterior queda como DUPLICADO', async () => {
+  const id = await idDePago('Ecografía Michi')
+  assert.match((await como(VET, `select registrar_pago_efectivo(${id})`)).error, /ya no está pendiente/)
+  const mp = await registrar(SERVIDOR, id, '200', 'approved', 35000)
+  assert.match(mp.filas[0].resultado, /PAGO DUPLICADO/)
+})
+
+// ---------- Estudios y archivos (Storage) ----------
+
+test('estudios: el bucket "estudios" es privado y limita tamaño y tipo de archivo', async () => {
+  const { rows: [bucket] } = await db.query(`select public, file_size_limit, allowed_mime_types from storage.buckets where id = 'estudios'`)
+  assert.equal(bucket.public, false)
+  assert.equal(Number(bucket.file_size_limit), 10 * 1024 * 1024)
+  assert.ok(bucket.allowed_mime_types.includes('application/pdf'))
+})
+
+test('estudios: solo la veterinaria sube archivos', async () => {
+  const luna = await idDe('Luna')
+  const rocco = await idDe('Rocco')
+  const subir = (usuario, ruta) => como(usuario, `insert into storage.objects (bucket_id, name) values ('estudios', '${ruta}') returning name`)
+  assert.equal((await subir(VET, `${luna}/analisis.pdf`)).filas.length, 1)
+  assert.equal((await subir(VET, `${rocco}/radiografia.png`)).filas.length, 1)
+  assert.match((await subir(ANA, `${luna}/trucho.pdf`)).error, /row-level security/)
+})
+
+test('estudios: el dueño/a solo puede abrir los archivos de SUS mascotas', async () => {
+  const luna = await idDe('Luna')
+  const visibles = await como(ANA, `select name from storage.objects where bucket_id = 'estudios'`)
+  assert.deepEqual(visibles.filas.map((f) => f.name), [`${luna}/analisis.pdf`])
+  assert.equal((await como(null, `select count(*)::int as n from storage.objects`)).filas[0].n, 0)
+  assert.equal((await como(VET, `select count(*)::int as n from storage.objects`)).filas[0].n, 2)
+})
+
+test('estudios: el cliente no puede borrar ni editar estudios; la veterinaria sí edita', async () => {
+  const borrar = await como(ANA, `delete from storage.objects returning name`)
+  assert.equal(borrar.filas.length, 0)
+  const editar = await como(ANA, `update estudios set comentarios = 'hackeado' returning id`)
+  assert.equal(editar.filas.length, 0)
+  const vet = await como(VET, `update estudios set comentarios = 'Control en 6 meses' where titulo = 'Análisis de sangre' returning comentarios`)
+  assert.equal(vet.filas[0].comentarios, 'Control en 6 meses')
+})
+
+test('estudios: el título tiene que tener entre 3 y 100 caracteres', async () => {
+  const r = await como(VET, `insert into estudios (mascota_id, titulo, fecha) values (${await idDe('Luna')}, 'ab', current_date)`)
+  assert.match(r.error, /estudios_titulo_check/)
 })

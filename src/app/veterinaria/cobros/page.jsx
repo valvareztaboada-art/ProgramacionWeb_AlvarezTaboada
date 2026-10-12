@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import PageHeader from '@/components/PageHeader'
 import Badge from '@/components/Badge'
+import BotonPagoEfectivo from '@/components/BotonPagoEfectivo'
 import { obtenerPagos, obtenerEventosDePago } from '@/lib/datos'
 import { conciliarCobros } from '@/lib/mercadopago/conciliar'
 
@@ -12,6 +13,7 @@ const formatoFechaHora = new Intl.DateTimeFormat('es-AR', {
   timeZone: 'America/Argentina/Buenos_Aires',
 })
 const pesos = (monto) => `$${Number(monto).toLocaleString('es-AR')}`
+const MEDIOS = { mercado_pago: 'Mercado Pago', efectivo: 'Efectivo' }
 
 export default async function Cobros() {
   // Primero conciliamos con Mercado Pago (por si algún webhook no llegó) y después leemos
@@ -36,8 +38,10 @@ export default async function Cobros() {
               <th>Concepto</th>
               <th>Monto</th>
               <th>Estado</th>
+              <th>Medio</th>
               <th>Pagado el</th>
               <th>N° de pago (MP)</th>
+              <th>Acciones</th>
             </tr>
           </thead>
           <tbody>
@@ -48,8 +52,14 @@ export default async function Cobros() {
                 <td>{p.concepto}</td>
                 <td>{pesos(p.monto)}</td>
                 <td><Badge estado={p.estado} /></td>
+                <td>{MEDIOS[p.metodo] ?? '—'}</td>
                 <td>{p.pagado_en ? formatoFechaHora.format(new Date(p.pagado_en)) : '—'}</td>
                 <td>{p.mp_payment_id ?? '—'}</td>
+                <td>
+                  {p.estado === 'pendiente'
+                    ? <BotonPagoEfectivo pagoId={p.id} descripcion={`"${p.concepto}" de ${p.mascota} (${pesos(p.monto)})`} />
+                    : '—'}
+                </td>
               </tr>
             ))}
           </tbody>

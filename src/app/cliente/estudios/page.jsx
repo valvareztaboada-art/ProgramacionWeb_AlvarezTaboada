@@ -1,25 +1,23 @@
 import PageHeader from '@/components/PageHeader'
+import TarjetaEstudio from '@/components/TarjetaEstudio'
 import { obtenerEstudios } from '@/lib/datos'
 
 export const metadata = { title: 'Estudios' }
 
 export default async function MisEstudios() {
+  // El RLS de la base (y el de Storage para los archivos) hace que solo vengan los de sus mascotas
   const estudios = await obtenerEstudios()
 
   return (
     <>
-      <PageHeader titulo="Estudios" descripcion="Resultados subidos por la veterinaria." />
-      <ul className="lista">
-        {estudios.map((e) => (
-          <li key={e.id} className="card lista-item">
-            <div>
-              <strong>{e.tipo}</strong>
-              <p className="texto-suave">{e.mascota} · {e.fecha}</p>
-            </div>
-            <button className="btn btn-secundario">Ver</button>
-          </li>
-        ))}
-      </ul>
+      <PageHeader titulo="Estudios" descripcion="Resultados y comentarios que cargó la veterinaria." />
+      {estudios.length === 0
+        ? <p className="texto-suave">Todavía no hay estudios de tus mascotas.</p>
+        : (
+          <ul className="lista">
+            {estudios.map((e) => <TarjetaEstudio key={e.id} estudio={e} mostrarMascota />)}
+          </ul>
+        )}
     </>
   )
 }

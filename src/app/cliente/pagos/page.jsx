@@ -59,7 +59,7 @@ export default async function MisPagos() {
                 <strong>{p.concepto}</strong>
                 <p className="texto-suave">
                   {p.mascota} · ${Number(p.monto).toLocaleString('es-AR')}
-                  {p.pagado_en && ` · pagado el ${formatoFecha.format(new Date(p.pagado_en))}`}
+                  {p.pagado_en && ` · pagado ${p.metodo === 'efectivo' ? 'en efectivo' : 'con Mercado Pago'} el ${formatoFecha.format(new Date(p.pagado_en))}`}
                 </p>
               </div>
               <Badge estado={p.estado} />
