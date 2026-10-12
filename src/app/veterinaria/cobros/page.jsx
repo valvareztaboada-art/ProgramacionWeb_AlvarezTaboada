@@ -30,35 +30,40 @@ export default async function Cobros() {
       </PageHeader>
 
       <div className="tabla-contenedor">
-        <table className="tabla">
+        {/* 5 columnas: los datos relacionados van juntos en una celda (dato principal + detalle abajo),
+            así la tabla entra en pantalla y el botón de acción siempre queda a la vista */}
+        <table className="tabla tabla-cobros">
           <thead>
             <tr>
               <th>Paciente</th>
-              <th>Dueño/a</th>
               <th>Concepto</th>
               <th>Monto</th>
               <th>Estado</th>
-              <th>Medio</th>
-              <th>Pagado el</th>
-              <th>N° de pago (MP)</th>
-              <th>Acciones</th>
+              <th>Acción</th>
             </tr>
           </thead>
           <tbody>
             {pagos.map((p) => (
               <tr key={p.id}>
-                <td><Link href={`/veterinaria/pacientes/${p.mascotaId}`} className="enlace">{p.mascota}</Link></td>
-                <td>{p.duenio}</td>
-                <td>{p.concepto}</td>
-                <td>{pesos(p.monto)}</td>
-                <td><Badge estado={p.estado} /></td>
-                <td>{MEDIOS[p.metodo] ?? '—'}</td>
-                <td>{p.pagado_en ? formatoFechaHora.format(new Date(p.pagado_en)) : '—'}</td>
-                <td>{p.mp_payment_id ?? '—'}</td>
-                <td>
+                <td data-label="Paciente">
+                  <Link href={`/veterinaria/pacientes/${p.mascotaId}`} className="enlace">{p.mascota}</Link>
+                  <span className="celda-detalle">{p.duenio}</span>
+                </td>
+                <td data-label="Concepto">{p.concepto}</td>
+                <td data-label="Monto" className="celda-monto">{pesos(p.monto)}</td>
+                <td data-label="Estado">
+                  <Badge estado={p.estado} />
+                  {p.pagado_en && (
+                    <span className="celda-detalle">
+                      {MEDIOS[p.metodo] ?? 'Pagado'} · {formatoFechaHora.format(new Date(p.pagado_en))}
+                    </span>
+                  )}
+                  {p.mp_payment_id && <span className="celda-detalle">N° MP {p.mp_payment_id}</span>}
+                </td>
+                <td data-label="Acción">
                   {p.estado === 'pendiente'
                     ? <BotonPagoEfectivo pagoId={p.id} descripcion={`"${p.concepto}" de ${p.mascota} (${pesos(p.monto)})`} />
-                    : '—'}
+                    : <span className="texto-suave">—</span>}
                 </td>
               </tr>
             ))}
