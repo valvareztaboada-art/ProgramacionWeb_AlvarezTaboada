@@ -6,6 +6,7 @@
 
 import { cache } from 'react'
 import { crearClienteServidor } from '@/lib/supabase/servidor'
+import { armarListaDeDuenios } from '@/lib/duenios'
 
 // Si una consulta falla, mostramos el error (lo atrapa el error boundary de Next)
 function revisar({ data, error }) {
@@ -180,4 +181,15 @@ export async function obtenerEventosDePago({ limite = 15 } = {}) {
     .select('id, pago_id, mp_payment_id, mp_estado, monto, resultado, recibido_en')
     .order('recibido_en', { ascending: false })
     .limit(limite))
+}
+
+// Dueños/as conocidos (con o sin cuenta) para sugerir al cargar un paciente.
+// Solo la veterinaria ve todos los perfiles y mascotas (RLS).
+export async function obtenerDuenios() {
+  const supabase = await crearClienteServidor()
+  const [perfiles, mascotas] = await Promise.all([
+    supabase.from('perfiles').select('email, nombre').eq('rol', 'cliente'),
+    supabase.from('mascotas').select('nombre, email_duenio').order('nombre'),
+  ])
+  return armarListaDeDuenios(revisar(perfiles), revisar(mascotas))
 }

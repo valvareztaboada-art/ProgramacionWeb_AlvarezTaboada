@@ -8,6 +8,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import Campo from './Campo'
+import SelectorDuenio from './SelectorDuenio'
 import { useFormulario } from '@/hooks/useFormulario'
 import { validarPaciente } from '@/lib/validaciones'
 import { crearClienteNavegador } from '@/lib/supabase/navegador'
@@ -15,8 +16,10 @@ import { mensajeDeError } from '@/lib/supabase/mensajes'
 
 const VACIO = { nombre: '', especie: '', raza: '', edad: '', emailDuenio: '' }
 
-function FormularioPaciente() {
-  const { datos, errores, handleChange, validarAlEnviar, reiniciar } = useFormulario(VACIO, validarPaciente)
+// duenios: los dueños/as que ya existen (con o sin cuenta), para sugerirlos
+function FormularioPaciente({ duenios = [] }) {
+  const { datos, errores, handleChange, cambiar, validarAlEnviar, reiniciar } = useFormulario(VACIO, validarPaciente)
+  const duenioElegido = duenios.find((d) => d.email === datos.emailDuenio.trim().toLowerCase())
   const [errorGeneral, setErrorGeneral] = useState('')
   const [cargando, setCargando] = useState(false)
   const [enviado, setEnviado] = useState(false)
@@ -61,8 +64,9 @@ function FormularioPaciente() {
       <div className="form-exito" role="status">
         <h2>¡{datos.nombre} quedó cargado/a!</h2>
         <p>
-          Cuando <strong>{datos.emailDuenio}</strong> se registre en MICAN con ese email,
-          va a ver a {datos.nombre} en su cuenta.
+          {duenioElegido?.registrado
+            ? <><strong>{duenioElegido.nombre ?? datos.emailDuenio}</strong> ya puede ver a {datos.nombre} en su cuenta.</>
+            : <>Cuando <strong>{datos.emailDuenio}</strong> se registre en MICAN con ese email, va a ver a {datos.nombre} en su cuenta.</>}
         </p>
         <div className="form-exito-botones">
           <button type="button" className="btn btn-primario" onClick={cargarOtro}>Cargar otro paciente</button>
@@ -113,10 +117,9 @@ function FormularioPaciente() {
         <legend>Dueño/a</legend>
 
         <Campo id="emailDuenio" label="Email del dueño/a" error={errores.emailDuenio}
-          ayuda="Cuando se registre con este email, va a ver a su mascota en su cuenta.">
-          <input id="emailDuenio" name="emailDuenio" type="email" placeholder="dueño@email.com"
-            value={datos.emailDuenio} onChange={handleChange}
-            aria-invalid={Boolean(errores.emailDuenio)} aria-describedby="emailDuenio-mensaje" />
+          ayuda="Elegí un dueño/a de la lista o escribí el email de uno nuevo: cuando se registre con ese email, va a ver a su mascota.">
+          <SelectorDuenio id="emailDuenio" duenios={duenios} valor={datos.emailDuenio}
+            onCambiar={(email) => cambiar({ emailDuenio: email })} invalido={Boolean(errores.emailDuenio)} />
         </Campo>
       </fieldset>
 
