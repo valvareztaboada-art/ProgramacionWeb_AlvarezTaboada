@@ -7,7 +7,7 @@ const HOY = '2026-09-24'
 
 test('registro: datos correctos no dan errores', () => {
   const errores = validarRegistro({
-    nombre: 'Ana Gómez', email: 'ana@mail.com', password: '12345678', confirmar: '12345678',
+    nombre: 'Ana Gómez', email: 'ana@mail.com', password: 'Huellita#2026', confirmar: 'Huellita#2026',
   })
   assert.deepEqual(errores, {})
 })
@@ -55,7 +55,7 @@ test('el email se acepta aunque tenga espacios al principio o al final', () => {
 })
 
 test('registro: el teléfono es opcional, pero si se completa tiene que ser válido', () => {
-  const base = { nombre: 'Ana Gómez', email: 'ana@mail.com', password: '12345678', confirmar: '12345678' }
+  const base = { nombre: 'Ana Gómez', email: 'ana@mail.com', password: 'Huellita#2026', confirmar: 'Huellita#2026' }
   assert.deepEqual(validarRegistro({ ...base, telefono: '' }), {})
   assert.deepEqual(validarRegistro({ ...base, telefono: '+54 11 2345-6789' }), {})
   assert.ok(validarRegistro({ ...base, telefono: 'abc' }).telefono)
@@ -63,7 +63,7 @@ test('registro: el teléfono es opcional, pero si se completa tiene que ser vál
 })
 
 test('registro: el nombre tiene que tener letras', () => {
-  const base = { email: 'ana@mail.com', password: '12345678', confirmar: '12345678' }
+  const base = { email: 'ana@mail.com', password: 'Huellita#2026', confirmar: 'Huellita#2026' }
   assert.ok(validarRegistro({ ...base, nombre: '1234' }).nombre)
   assert.ok(validarRegistro({ ...base, nombre: '   ' }).nombre)
 })

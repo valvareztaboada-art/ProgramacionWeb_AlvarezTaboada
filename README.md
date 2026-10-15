@@ -122,6 +122,9 @@ Todo está en [`supabase/migrations`](supabase/migrations) y los datos de ejempl
    ```
 5. En Vercel → Settings → Environment Variables: cargar las mismas dos variables.
 
+## Seguridad
+Autenticación, contraseñas (bcrypt con salt), sesiones, RBAC y códigos 401/403: ver [docs/seguridad.md](docs/seguridad.md).
+
 ## Próximos pasos (según avance la materia)
 - [x] Migrar a Next.js (App Router)
 - [x] Base de datos con Supabase

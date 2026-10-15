@@ -1,11 +1,14 @@
 // Proxy (en Next.js 16 reemplaza a "middleware"): se ejecuta ANTES de cada página.
 // 1. Renueva la sesión de Supabase si está por vencer (actualiza las cookies).
-// 2. Si alguien sin sesión entra a /cliente o /veterinaria, lo manda al login.
-// El control de ROL (cliente o veterinaria) lo hacen los layouts de cada sección,
-// y lo que cada uno puede ver o modificar lo controla el RLS de la base de datos.
+// 2. Si alguien sin sesión entra a /cliente o /veterinaria, lo manda al login
+//    (es el "401": no está autenticado).
+// El control de ROL (cliente o veterinaria) lo hacen los layouts de cada sección
+// con forbidden() → "403": está autenticado pero no tiene permiso.
+// Y lo que cada uno puede ver o modificar lo controla el RLS de la base de datos.
 
 import { NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
+import { OPCIONES_DE_COOKIES } from '@/lib/supabase/cookies'
 
 export async function proxy(request) {
   let respuesta = NextResponse.next({ request })
@@ -21,6 +24,7 @@ export async function proxy(request) {
     process.env.NEXT_PUBLIC_SUPABASE_URL,
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
     {
+      cookieOptions: OPCIONES_DE_COOKIES,
       cookies: {
         getAll() {
           return request.cookies.getAll()
