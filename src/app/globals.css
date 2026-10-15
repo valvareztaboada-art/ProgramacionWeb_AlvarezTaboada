@@ -863,3 +863,17 @@ address { font-style: normal; line-height: 1.9; }
   .tabla-cobros td[data-label="Acción"] { padding-top: 0.6rem; }
   .tabla-cobros td[data-label="Acción"]::before { display: none; }
 }
+
+/* ===== Indicador de fortaleza de la contraseña ===== */
+.medidor { display: flex; flex-direction: column; gap: 0.4rem; margin-top: 0.2rem; }
+.medidor-barra { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
+.medidor-barra span { height: 6px; border-radius: 999px; background: var(--borde); transition: background 0.2s; }
+.medidor-debil .medidor-barra .lleno { background: #c0462f; }
+.medidor-media .medidor-barra .lleno { background: var(--mostaza); }
+.medidor-fuerte .medidor-barra .lleno { background: #2f8a5b; }
+.medidor-nivel { font-size: 0.88rem; color: var(--texto-suave); }
+.medidor-requisitos { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.15rem 1rem; font-size: 0.85rem; color: var(--texto-suave); }
+.medidor-requisitos li.cumple { color: #1f6b45; font-weight: 700; }
+.medidor-requisitos li.comun { color: #8f1d14; font-weight: 700; grid-column: 1 / -1; }
+
+.aviso-bloqueo { font-size: 0.9rem; background: #fff3c4; color: #6b5300; border-radius: 12px; padding: 0.6rem 0.9rem; }

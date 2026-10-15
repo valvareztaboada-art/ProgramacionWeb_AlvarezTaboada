@@ -7,6 +7,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Campo from './Campo'
+import MedidorContrasena from './MedidorContrasena'
 import { useFormulario } from '@/hooks/useFormulario'
 import { validarRegistro } from '@/lib/validaciones'
 import { crearClienteNavegador } from '@/lib/supabase/navegador'
@@ -95,11 +96,14 @@ function FormularioRegistro() {
           aria-invalid={Boolean(errores.telefono)} aria-describedby="telefono-mensaje" />
       </Campo>
 
-      <Campo id="password" label="Contraseña" error={errores.password} ayuda="Mínimo 8 caracteres.">
-        <input id="password" name="password" type="password" autoComplete="new-password"
+      <Campo id="password" label="Contraseña" error={errores.password}>
+        <input id="password" name="password" type="password" autoComplete="new-password" maxLength={72}
           value={datos.password} onChange={handleChange}
-          aria-invalid={Boolean(errores.password)} aria-describedby="password-mensaje" />
+          aria-invalid={Boolean(errores.password)} aria-describedby="password-mensaje password-medidor" />
       </Campo>
+      <div id="password-medidor">
+        <MedidorContrasena contrasena={datos.password} />
+      </div>
 
       <Campo id="confirmar" label="Repetí la contraseña" error={errores.confirmar}>
         <input id="confirmar" name="confirmar" type="password" autoComplete="new-password"

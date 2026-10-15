@@ -1,4 +1,4 @@
-import { redirect } from 'next/navigation'
+import { forbidden, redirect } from 'next/navigation'
 import PanelLayout from '@/components/PanelLayout'
 import { obtenerUsuarioActual } from '@/lib/datos'
 
@@ -11,12 +11,12 @@ const menu = [
   { href: '/cliente/pagos', label: 'Pagos', icono: 'tarjeta' },
 ]
 
-// Layout de la interfaz del dueño. Controla quién puede entrar:
-// sin sesión → login · si es la veterinaria → a su panel
+// Layout de la interfaz del dueño. Controla quién puede entrar (RBAC):
+// sin sesión → login (no está autenticado) · otro rol → 403 (autenticado, pero sin permiso)
 export default async function ClienteLayout({ children }) {
   const usuario = await obtenerUsuarioActual()
   if (!usuario) redirect('/login')
-  if (usuario.rol === 'veterinaria') redirect('/veterinaria')
+  if (usuario.rol !== 'cliente') forbidden()
 
   return (
     <PanelLayout titulo="Mi cuenta" rol="cliente" menu={menu} usuario={usuario}>

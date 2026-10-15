@@ -2,7 +2,7 @@
 // Crea la Preferencia de Pago en Mercado Pago (Checkout Pro) y devuelve la URL para pagar.
 //
 // Seguridad:
-//   · Hace falta estar logueado (401 si no)
+//   · Hace falta estar logueado (401 si no) y ser cliente (403 si es otro rol)
 //   · El pago se busca con la sesión del usuario: el RLS solo devuelve SUS pagos (404 si no)
 //   · Solo se pueden pagar cobros pendientes (409 si no)
 //   · El monto sale de la base de datos, nunca del navegador
@@ -24,6 +24,10 @@ export async function POST(request, { params }) {
   const supabase = await crearClienteServidor()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return error(401, 'Tu sesión venció. Volvé a ingresar.')
+
+  // Autenticado, pero ¿tiene el rol que corresponde? Pagar es cosa del dueño/a (RBAC)
+  const { data: perfil } = await supabase.from('perfiles').select('rol').eq('id', user.id).single()
+  if (perfil?.rol !== 'cliente') return error(403, 'Solo el dueño/a puede pagar sus cobros.')
 
   const { data: pago } = await supabase
     .from('pagos')

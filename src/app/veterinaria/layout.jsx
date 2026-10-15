@@ -1,4 +1,4 @@
-import { redirect } from 'next/navigation'
+import { forbidden, redirect } from 'next/navigation'
 import PanelLayout from '@/components/PanelLayout'
 import { obtenerUsuarioActual } from '@/lib/datos'
 
@@ -10,12 +10,13 @@ const menu = [
   { href: '/veterinaria/cobros', label: 'Cobros', icono: 'dinero' },
 ]
 
-// Layout de la interfaz de la veterinaria. Solo entra quien tiene rol "veterinaria".
+// Layout de la interfaz de la veterinaria. Solo entra quien tiene rol "veterinaria" (RBAC):
+// sin sesión → login (no está autenticado) · otro rol → 403 (autenticado, pero sin permiso).
 // (Aunque alguien saltee esta pantalla, el RLS no le devolvería datos ajenos.)
 export default async function VeterinariaLayout({ children }) {
   const usuario = await obtenerUsuarioActual()
   if (!usuario) redirect('/login')
-  if (usuario.rol !== 'veterinaria') redirect('/cliente')
+  if (usuario.rol !== 'veterinaria') forbidden()
 
   return (
     <PanelLayout titulo="Veterinaria" rol="veterinaria" menu={menu} usuario={usuario}>

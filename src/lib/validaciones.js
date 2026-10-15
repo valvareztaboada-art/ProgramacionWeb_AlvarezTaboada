@@ -4,6 +4,7 @@
 // La base de datos vuelve a controlar lo importante: nunca hay que confiar solo en el navegador.
 
 import { TAMANIO_MAXIMO, TIPOS_PERMITIDOS } from './archivos.js'
+import { errorDeContrasena } from './contrasena.js'
 
 const EMAIL_VALIDO = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
 const TIENE_LETRAS = /\p{L}/u
@@ -43,10 +44,8 @@ export function validarRegistro({ nombre, email, telefono = '', password, confir
       : !TELEFONO_VALIDO.test(telefono) || digitosTelefono.length < 8 || digitosTelefono.length > 15
         ? 'Ingresá un teléfono válido (solo números, ej: 11 2345-6789).'
         : null,
-    password:
-      password.length < 8 ? 'La contraseña tiene que tener al menos 8 caracteres.'
-      : password.length > 72 ? 'La contraseña puede tener hasta 72 caracteres.'
-      : null,
+    // Largo, minúscula, mayúscula, número, símbolo y que no sea obvia (ver contrasena.js)
+    password: errorDeContrasena(password),
     confirmar:
       confirmar === '' ? 'Repetí la contraseña.'
       : confirmar !== password ? 'Las contraseñas no coinciden.'
