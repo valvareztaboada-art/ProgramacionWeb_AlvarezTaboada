@@ -105,7 +105,8 @@ export async function obtenerTurnos({ mascotaId } = {}) {
 
 export async function obtenerVacunas({ mascotaId } = {}) {
   const supabase = await crearClienteServidor()
-  let consulta = supabase.from('vacunas').select('*, mascotas(nombre, email_duenio)').order('fecha')
+  let consulta = supabase.from('vacunas').select('*, mascotas(nombre, email_duenio)')
+    .order('fecha_aplicacion', { ascending: false }).order('id', { ascending: false })
   if (mascotaId) consulta = consulta.eq('mascota_id', mascotaId)
   return conMascota(supabase, revisar(await consulta))
 }

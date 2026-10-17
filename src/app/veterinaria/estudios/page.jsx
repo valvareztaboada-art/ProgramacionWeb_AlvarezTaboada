@@ -2,6 +2,7 @@ import Link from 'next/link'
 import PageHeader from '@/components/PageHeader'
 import TarjetaEstudio from '@/components/TarjetaEstudio'
 import { obtenerEstudios } from '@/lib/datos'
+import MostrarMas from '@/components/MostrarMas'
 
 export const metadata = { title: 'Estudios' }
 
@@ -17,11 +18,13 @@ export default async function Estudios() {
       {estudios.length === 0
         ? <p className="texto-suave">Todavía no hay estudios cargados.</p>
         : (
+          <MostrarMas total={estudios.length} que="estudios anteriores">
           <ul className="lista">
             {estudios.map((e) => (
               <TarjetaEstudio key={e.id} estudio={e} mostrarMascota esVeterinaria volver="/veterinaria/estudios" />
             ))}
           </ul>
+          </MostrarMas>
         )}
     </>
   )

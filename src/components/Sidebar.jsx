@@ -16,6 +16,12 @@ function Sidebar({ titulo, menu, usuario }) {
             <li key={item.href}>
               <EnlaceNav href={item.href} exacto={item.exacto}>
                 <Icono nombre={item.icono} /> {item.label}
+                {item.alerta && (
+                  <span className="alerta-menu" title={item.alerta}>
+                    <span aria-hidden="true">!</span>
+                    <span className="visualmente-oculto"> ({item.alerta})</span>
+                  </span>
+                )}
               </EnlaceNav>
             </li>
           ))}

@@ -144,7 +144,7 @@ test('la veterinaria ve todas las mascotas', async () => {
 test('el cliente NO puede cargar mascotas ni vacunas', async () => {
   const mascota = await como(ANA, `insert into mascotas (nombre, especie, email_duenio) values ('X', 'Perro', 'ana.gomez@mail.com')`)
   assert.match(mascota.error, /row-level security/)
-  const vacuna = await como(ANA, `insert into vacunas (mascota_id, vacuna, fecha) values (${await idDe('Luna')}, 'X', current_date)`)
+  const vacuna = await como(ANA, `insert into vacunas (mascota_id, vacuna, linea, fecha_aplicacion) values (${await idDe('Luna')}, 'Rabia', 'rabia', current_date)`)
   assert.match(vacuna.error, /row-level security/)
 })
 
@@ -358,4 +358,29 @@ test('estudios: el cliente no puede borrar ni editar estudios; la veterinaria s�
 test('estudios: el título tiene que tener entre 3 y 100 caracteres', async () => {
   const r = await como(VET, `insert into estudios (mascota_id, titulo, fecha) values (${await idDe('Luna')}, 'ab', current_date)`)
   assert.match(r.error, /estudios_titulo_check/)
+})
+
+// ---------- Vacunas ----------
+
+test('vacunas: la veterinaria registra una dosis con su próxima fecha; la próxima tiene que ser posterior', async () => {
+  const ok = await como(VET, `insert into vacunas (mascota_id, vacuna, tipo, linea, fecha_aplicacion, proxima_dosis)
+    values (${await idDe('Rocco')}, 'Polivalente · refuerzo anual', 'polivalente_anual', 'polivalente', current_date, current_date + 365) returning id`)
+  assert.equal(ok.filas.length, 1)
+  const mal = await como(VET, `insert into vacunas (mascota_id, vacuna, linea, fecha_aplicacion, proxima_dosis)
+    values (${await idDe('Rocco')}, 'Rabia', 'rabia', current_date, current_date - 1)`)
+  assert.match(mal.error, /vacunas_proxima_check/)
+})
+
+test('vacunas: la veterinaria marca que ya le avisó al dueño/a (y lo puede desmarcar)', async () => {
+  const marcar = await como(VET, `update vacunas set avisado_en = now() where mascota_id = ${await idDe('Michi')} returning avisado_en`)
+  assert.ok(marcar.filas.length > 0 && marcar.filas.every((f) => f.avisado_en))
+  const desmarcar = await como(VET, `update vacunas set avisado_en = null where mascota_id = ${await idDe('Michi')} returning avisado_en`)
+  assert.ok(desmarcar.filas.every((f) => f.avisado_en === null))
+})
+
+test('vacunas: el cliente ve las de sus mascotas pero no puede marcarlas ni modificarlas', async () => {
+  const ve = await como(ANA, 'select count(*)::int as n from vacunas')
+  assert.ok(ve.filas[0].n > 0)
+  const marcar = await como(ANA, 'update vacunas set avisado_en = now() returning id')
+  assert.equal(marcar.filas.length, 0)
 })
