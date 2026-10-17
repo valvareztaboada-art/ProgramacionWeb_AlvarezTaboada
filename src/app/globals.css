@@ -902,3 +902,82 @@ address { font-style: normal; line-height: 1.9; }
 .selector-elegido { color: #1f6b45; font-weight: 700; }
 .selector-parecido { color: #6b5300; background: #fff3c4; border-radius: 10px; padding: 0.4rem 0.7rem; }
 .boton-enlace { border: none; background: none; padding: 0; font: inherit; font-weight: 800; color: var(--azul); text-decoration: underline; cursor: pointer; }
+
+/* ===== "Mostrar más": mientras está plegado se ven los primeros 5 ===== */
+.plegable[data-plegado="true"] .lista > li:nth-child(n+6),
+.plegable[data-plegado="true"] tbody > tr:nth-child(n+6) { display: none; }
+.boton-mostrar-mas {
+  display: inline-flex; align-items: center; gap: 0.35rem; margin-top: 0.75rem;
+  border: none; background: none; padding: 0.3rem 0; cursor: pointer;
+  font: inherit; font-weight: 800; color: var(--color-panel, var(--azul));
+  text-decoration: underline; text-decoration-color: var(--mostaza); text-decoration-thickness: 2px; text-underline-offset: 4px;
+}
+.boton-mostrar-mas svg { transition: transform 0.2s; }
+.boton-mostrar-mas svg.girado { transform: rotate(180deg); }
+
+/* ===== Vacunas: cuenta regresiva ===== */
+.proximas-vacunas { display: flex; flex-direction: column; gap: 0.9rem; }
+.cuenta-regresiva {
+  display: flex; align-items: center; gap: 1.25rem; flex-wrap: wrap;
+  background: var(--blanco); border: 2px solid var(--borde); border-radius: var(--radio);
+  box-shadow: var(--sombra); padding: 1rem 1.25rem;
+}
+.cuenta-numero {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  min-width: 96px; padding: 0.6rem 0.8rem; border-radius: 16px; background: var(--celeste); color: var(--azul-oscuro); text-align: center;
+}
+.cuenta-numero strong { font-family: var(--fuente-titulos); font-size: 2.4rem; line-height: 1; font-weight: 600; }
+.cuenta-antes { font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; }
+.cuenta-pronto .cuenta-numero { background: #fff3c4; color: #6b5300; }
+.cuenta-vencida .cuenta-numero { background: #fbe0dd; color: #8f1d14; }
+.cuenta-pronto { border-color: var(--mostaza); }
+.cuenta-vencida { border-color: #e9b4ad; }
+.cuenta-titulo { font-size: 0.9rem; color: var(--texto-suave); }
+.cuenta-vacuna { font-family: var(--fuente-titulos); font-size: 1.25rem; font-weight: 600; }
+.cuenta-aviso { margin-top: 0.3rem; font-weight: 800; color: #8a5a12; }
+.cuenta-vencida .cuenta-aviso { color: #8f1d14; }
+.lista-proximas { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.4rem; }
+.lista-proximas li { display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; padding: 0.55rem 0.9rem; border-radius: 12px; background: var(--blanco); border: 1.5px solid var(--borde); }
+.lista-proximas li.proxima-pronto { border-color: var(--mostaza); }
+.lista-proximas li.proxima-vencida { border-color: #e9b4ad; }
+
+/* Historial de dosis */
+.vacuna-dosis { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap; }
+.vacuna-proxima { font-size: 0.88rem; color: var(--texto-suave); white-space: nowrap; }
+.vacuna-notas { margin-top: 0.3rem; font-size: 0.88rem; white-space: pre-line; }
+.subtitulo-ficha { font-size: 1.05rem; margin: 1.1rem 0 0.6rem; }
+
+/* Etiqueta de días (panel de la veterinaria) */
+.etiqueta-dias { padding: 0.2rem 0.8rem; border-radius: 999px; font-size: 0.85rem; font-weight: 800; white-space: nowrap; }
+.etiqueta-pronto { background: #fff3c4; color: #6b5300; }
+.etiqueta-vencida { background: #fbe0dd; color: #8f1d14; }
+
+/* Aviso en el menú lateral (ej: vacuna próxima) */
+.alerta-menu {
+  margin-left: auto; width: 20px; height: 20px; border-radius: 50%;
+  display: inline-grid; place-items: center; flex-shrink: 0;
+  background: #e5484d; color: #fff; font-size: 0.78rem; font-weight: 800;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .alerta-menu { animation: latir-alerta 2s ease-in-out infinite; }
+  @keyframes latir-alerta { 50% { transform: scale(1.15); } }
+}
+
+/* Vacunas a vencer (veterinaria) */
+.aviso-vacuna { display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; border-left: 6px solid var(--borde); }
+.aviso-vacuna.aviso-pronto { border-left-color: var(--mostaza); }
+.aviso-vacuna.aviso-vencida { border-left-color: #e5484d; }
+.aviso-vacuna-datos { display: grid; gap: 0.3rem; min-width: 0; }
+.aviso-vacuna-titulo { font-weight: 800; }
+.aviso-vacuna-duenio { font-size: 0.9rem; overflow-wrap: anywhere; }
+.aviso-email { font-weight: 700; }
+.aviso-vacuna-acciones { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+.boton-copiar { display: inline-flex; flex-direction: column; gap: 0.3rem; }
+.copiar-manual { font: inherit; font-size: 0.85rem; padding: 0.3rem 0.5rem; border: 1.5px solid var(--borde); border-radius: 8px; max-width: 16rem; }
+.casilla-avisado { display: flex; align-items: center; gap: 0.4rem; font-weight: 700; flex-wrap: wrap; }
+.casilla-avisado input { width: 1.2rem; height: 1.2rem; accent-color: var(--mostaza); cursor: pointer; }
+.casilla-avisado label { cursor: pointer; }
+.aviso-panel { margin-top: 1.5rem; border-left: 6px solid var(--mostaza); }
+@media (max-width: 640px) {
+  .aviso-vacuna { flex-direction: column; align-items: stretch; }
+}

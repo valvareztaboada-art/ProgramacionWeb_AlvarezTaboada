@@ -2,6 +2,11 @@ import Link from 'next/link'
 import Badge from './Badge'
 import AccionesTurno from './AccionesTurno'
 import TarjetaEstudio from './TarjetaEstudio'
+import ProximasVacunas from './ProximasVacunas'
+import HistorialVacunas from './HistorialVacunas'
+import MostrarMas from './MostrarMas'
+import { proximasVacunas } from '@/lib/vacunas'
+import { hoyISO } from '@/lib/horarios'
 import { formatearEdad, formatearFecha } from '@/lib/formato'
 import { IlustracionMascota } from './ilustraciones/Ilustraciones'
 
@@ -33,6 +38,7 @@ function FichaMascota({ mascota, turnos, vacunas, estudios, volver, esVeterinari
       <div className="grid-ficha">
         <section>
           <h2>Turnos</h2>
+          <MostrarMas total={turnosOrdenados.length} que="turnos anteriores">
           <ul className="lista">
             {turnosOrdenados.map((t) => (
               <li key={t.id} className="card lista-item">
@@ -49,23 +55,23 @@ function FichaMascota({ mascota, turnos, vacunas, estudios, volver, esVeterinari
               </li>
             ))}
           </ul>
+          </MostrarMas>
           {turnos.length === 0 && <p className="texto-suave">Sin turnos registrados.</p>}
         </section>
 
         <section>
-          <h2>Vacunas</h2>
-          <ul className="lista">
-            {vacunas.map((v) => (
-              <li key={v.id} className="card lista-item">
-                <div>
-                  <strong>{v.vacuna}</strong>
-                  <p className="texto-suave">{v.fecha}</p>
-                </div>
-                <Badge estado={v.aplicada ? 'Aplicada' : 'Pendiente'} />
-              </li>
-            ))}
-          </ul>
-          {vacunas.length === 0 && <p className="texto-suave">Sin vacunas registradas.</p>}
+          <div className="ficha-seccion-encabezado">
+            <h2>Vacunas</h2>
+            {esVeterinaria && (
+              <Link href={`/veterinaria/pacientes/${mascota.id}/vacunas/nueva`} className="btn btn-chico btn-primario">
+                + Registrar vacuna
+              </Link>
+            )}
+          </div>
+          <ProximasVacunas proximas={proximasVacunas(vacunas, hoyISO())} mostrarMascota={false}
+            vacio="No tiene vacunas programadas." />
+          <h3 className="subtitulo-ficha">Historial</h3>
+          <HistorialVacunas vacunas={vacunas} />
         </section>
 
         <section>
@@ -77,12 +83,14 @@ function FichaMascota({ mascota, turnos, vacunas, estudios, volver, esVeterinari
               </Link>
             )}
           </div>
-          <ul className="lista">
-            {estudios.map((e) => (
-              <TarjetaEstudio key={e.id} estudio={e} esVeterinaria={esVeterinaria}
-                volver={esVeterinaria ? `/veterinaria/pacientes/${mascota.id}` : ''} />
-            ))}
-          </ul>
+          <MostrarMas total={estudios.length} que="estudios anteriores">
+            <ul className="lista">
+              {estudios.map((e) => (
+                <TarjetaEstudio key={e.id} estudio={e} esVeterinaria={esVeterinaria}
+                  volver={esVeterinaria ? `/veterinaria/pacientes/${mascota.id}` : ''} />
+              ))}
+            </ul>
+          </MostrarMas>
           {estudios.length === 0 && <p className="texto-suave">Sin estudios cargados.</p>}
         </section>
       </div>

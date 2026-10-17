@@ -2,6 +2,7 @@ import Link from 'next/link'
 import PageHeader from '@/components/PageHeader'
 import Badge from '@/components/Badge'
 import AccionesTurno from '@/components/AccionesTurno'
+import MostrarMas from '@/components/MostrarMas'
 import { obtenerTurnos } from '@/lib/datos'
 import { formatearFecha } from '@/lib/formato'
 import { separarTurnos } from '@/lib/turnos'
@@ -75,7 +76,7 @@ export default async function Agenda() {
         <h2 id="titulo-historial">Historial</h2>
         {cerrados.length === 0
           ? <p className="texto-suave">Todavía no hay turnos anteriores.</p>
-          : <TablaTurnos turnos={cerrados} />}
+          : <MostrarMas total={cerrados.length} que="turnos anteriores"><TablaTurnos turnos={cerrados} /></MostrarMas>}
       </section>
     </>
   )

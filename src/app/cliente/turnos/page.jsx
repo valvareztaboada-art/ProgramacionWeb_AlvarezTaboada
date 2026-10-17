@@ -5,6 +5,7 @@ import BotonCancelarTurno from '@/components/BotonCancelarTurno'
 import { obtenerTurnos } from '@/lib/datos'
 import { formatearFecha } from '@/lib/formato'
 import { separarTurnos, clientePuedeCancelar } from '@/lib/turnos'
+import MostrarMas from '@/components/MostrarMas'
 
 export const metadata = { title: 'Mis turnos' }
 
@@ -42,6 +43,7 @@ export default async function MisTurnos() {
       <section className="seccion-panel" aria-labelledby="titulo-historial">
         <h2 id="titulo-historial">Historial</h2>
         {historial.length === 0 && <p className="texto-suave">Todavía no hay turnos anteriores.</p>}
+        <MostrarMas total={historial.length} que="turnos anteriores">
         <ul className="lista">
           {historial.map((t) => (
             <li key={t.id} className="card lista-item lista-item-historial">
@@ -53,6 +55,7 @@ export default async function MisTurnos() {
             </li>
           ))}
         </ul>
+        </MostrarMas>
       </section>
     </>
   )

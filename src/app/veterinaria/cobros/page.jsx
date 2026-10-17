@@ -4,6 +4,7 @@ import Badge from '@/components/Badge'
 import BotonPagoEfectivo from '@/components/BotonPagoEfectivo'
 import { obtenerPagos, obtenerEventosDePago } from '@/lib/datos'
 import { conciliarCobros } from '@/lib/mercadopago/conciliar'
+import MostrarMas from '@/components/MostrarMas'
 
 export const metadata = { title: 'Cobros' }
 
@@ -29,6 +30,7 @@ export default async function Cobros() {
         <Link href="/veterinaria/cobros/nuevo" className="btn btn-primario">+ Nuevo cobro</Link>
       </PageHeader>
 
+      <MostrarMas total={pagos.length} que="cobros anteriores">
       <div className="tabla-contenedor">
         {/* 5 columnas: los datos relacionados van juntos en una celda (dato principal + detalle abajo),
             así la tabla entra en pantalla y el botón de acción siempre queda a la vista */}
@@ -70,6 +72,7 @@ export default async function Cobros() {
           </tbody>
         </table>
       </div>
+      </MostrarMas>
 
       <section className="seccion-panel" aria-labelledby="titulo-eventos">
         <h2 id="titulo-eventos">Notificaciones de Mercado Pago</h2>
@@ -79,6 +82,7 @@ export default async function Cobros() {
         {eventos.length === 0
           ? <p className="texto-suave">Todavía no llegó ninguna notificación.</p>
           : (
+            <MostrarMas total={eventos.length} que="notificaciones anteriores">
             <div className="tabla-contenedor">
               <table className="tabla">
                 <thead>
@@ -105,6 +109,7 @@ export default async function Cobros() {
                 </tbody>
               </table>
             </div>
+            </MostrarMas>
           )}
       </section>
     </>

@@ -3,24 +3,29 @@ import PageHeader from '@/components/PageHeader'
 import StatCard from '@/components/StatCard'
 import Badge from '@/components/Badge'
 import AccionesTurno from '@/components/AccionesTurno'
-import { obtenerUsuarioActual, obtenerMascotas, obtenerTurnos, obtenerEstudios, obtenerPagos } from '@/lib/datos'
+import { obtenerUsuarioActual, obtenerMascotas, obtenerTurnos, obtenerEstudios, obtenerPagos, obtenerVacunas } from '@/lib/datos'
+import { vacunasAVencer } from '@/lib/vacunas'
+import { hoyISO } from '@/lib/horarios'
 import { formatearFecha } from '@/lib/formato'
 import { separarTurnos, turnosDeLaSemana } from '@/lib/turnos'
 
 export const metadata = { title: 'Panel' }
 
 export default async function VetInicio() {
-  const [usuario, mascotas, turnos, estudios, pagos] = await Promise.all([
+  const [usuario, mascotas, turnos, estudios, pagos, vacunas] = await Promise.all([
     obtenerUsuarioActual(),
     obtenerMascotas(),
     obtenerTurnos(),
     obtenerEstudios(),
     obtenerPagos(),
+    obtenerVacunas(),
   ])
 
   const { proximos } = separarTurnos(turnos)
   const estaSemana = turnosDeLaSemana(turnos)
   const cobrosPendientes = pagos.filter((p) => p.estado === 'pendiente')
+  // Vacunas que vencen en 30 días o menos (o ya vencieron) y todavía no se avisaron
+  const porAvisar = vacunasAVencer(vacunas, hoyISO())
 
   return (
     <>
@@ -54,6 +59,14 @@ export default async function VetInicio() {
         </ul>
         <Link href="/veterinaria/agenda" className="enlace">Ver la agenda completa →</Link>
       </section>
+
+      {porAvisar.length > 0 && (
+        <p className="card aviso-panel">
+          <strong>Tenés {porAvisar.length} {porAvisar.length === 1 ? 'vacuna' : 'vacunas'} por avisar</strong>
+          {' '}(vencen en los próximos 30 días).{' '}
+          <Link href="/veterinaria/vacunas" className="enlace">Ver vacunas a vencer →</Link>
+        </p>
+      )}
     </>
   )
 }

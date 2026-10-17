@@ -32,15 +32,16 @@ cross join (values
 ) as t (mascota, especialidad_id, dias, hora, motivo, estado)
 join public.mascotas m on m.nombre = t.mascota;
 
-insert into public.vacunas (mascota_id, vacuna, fecha, aplicada)
-select m.id, v.vacuna, f.lunes + v.dias, v.aplicada
+-- Dosis aplicadas (fecha_aplicacion) y cuándo toca la próxima
+insert into public.vacunas (mascota_id, vacuna, tipo, linea, fecha_aplicacion, proxima_dosis)
+select m.id, v.vacuna, v.tipo, v.linea, f.lunes + v.dias, f.lunes + v.dias + v.proxima_en
 from fechas f
 cross join (values
-  ('Luna',  'Antirrábica',   15,   false),
-  ('Michi', 'Triple felina', 2,    false),
-  ('Luna',  'Séxtuple',      -200, true),
-  ('Rocco', 'Antirrábica',   30,   false)
-) as v (mascota, vacuna, dias, aplicada)
+  ('Luna',  'Antirrábica · refuerzo anual',           'rabia_anual',      'rabia',         -340, 365),
+  ('Luna',  'Polivalente (séxtuple) · refuerzo anual', 'polivalente_anual', 'polivalente',   -200, 365),
+  ('Michi', 'Antirrábica · refuerzo anual',           'rabia_anual',      'rabia',         -350, 365),
+  ('Rocco', 'Antirrábica · refuerzo anual',           'rabia_anual',      'rabia',         -300, 365)
+) as v (mascota, vacuna, tipo, linea, dias, proxima_en)
 join public.mascotas m on m.nombre = v.mascota;
 
 insert into public.estudios (mascota_id, titulo, fecha, comentarios)

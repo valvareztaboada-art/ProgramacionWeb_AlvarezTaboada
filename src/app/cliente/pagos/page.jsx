@@ -3,6 +3,7 @@ import Badge from '@/components/Badge'
 import BotonPagar from '@/components/BotonPagar'
 import { obtenerPagos } from '@/lib/datos'
 import { conciliarCobros } from '@/lib/mercadopago/conciliar'
+import MostrarMas from '@/components/MostrarMas'
 
 export const metadata = { title: 'Pagos' }
 
@@ -52,6 +53,7 @@ export default async function MisPagos() {
       <section className="seccion-panel" aria-labelledby="titulo-historial-pagos">
         <h2 id="titulo-historial-pagos">Historial</h2>
         {historial.length === 0 && <p className="texto-suave">Todavía no hay pagos realizados.</p>}
+        <MostrarMas total={historial.length} que="pagos anteriores">
         <ul className="lista">
           {historial.map((p) => (
             <li key={p.id} className="card lista-item lista-item-historial">
@@ -66,6 +68,7 @@ export default async function MisPagos() {
             </li>
           ))}
         </ul>
+        </MostrarMas>
       </section>
     </>
   )

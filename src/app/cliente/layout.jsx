@@ -1,6 +1,8 @@
 import { forbidden, redirect } from 'next/navigation'
 import PanelLayout from '@/components/PanelLayout'
-import { obtenerUsuarioActual } from '@/lib/datos'
+import { obtenerUsuarioActual, obtenerVacunas } from '@/lib/datos'
+import { hayVacunasParaAtender } from '@/lib/vacunas'
+import { hoyISO } from '@/lib/horarios'
 
 const menu = [
   { href: '/cliente', label: 'Inicio', icono: 'inicio', exacto: true },
@@ -18,8 +20,13 @@ export default async function ClienteLayout({ children }) {
   if (!usuario) redirect('/login')
   if (usuario.rol !== 'cliente') forbidden()
 
+  // Si alguna vacuna vence en 30 días o menos (o ya venció), "Vacunas" muestra un aviso en el menú
+  const alertaVacunas = hayVacunasParaAtender(await obtenerVacunas(), hoyISO())
+  const menuConAvisos = menu.map((item) =>
+    item.href === '/cliente/vacunas' && alertaVacunas ? { ...item, alerta: 'hay una vacuna próxima' } : item)
+
   return (
-    <PanelLayout titulo="Mi cuenta" rol="cliente" menu={menu} usuario={usuario}>
+    <PanelLayout titulo="Mi cuenta" rol="cliente" menu={menuConAvisos} usuario={usuario}>
       {children}
     </PanelLayout>
   )

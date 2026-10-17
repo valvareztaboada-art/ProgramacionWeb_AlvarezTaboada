@@ -128,3 +128,23 @@ export function validarEstudio({ mascotaId, titulo, fecha, comentarios = '', arc
       : null,
   })
 }
+
+// tipo: id del calendario, 'otra', o '' si no eligió. Para especies sin calendario, tipo = 'otra'.
+export function validarVacuna({ tipo, nombre = '', fecha, proxima = '', notas = '' }, hoy) {
+  const nombreLimpio = nombre.trim()
+
+  return sinVacios({
+    tipo: tipo === '' ? 'Elegí la vacuna.' : null,
+    nombre:
+      tipo !== 'otra' ? null
+      : nombreLimpio.length < 2 ? 'Escribí el nombre de la vacuna.'
+      : nombreLimpio.length > 80 ? 'El nombre puede tener hasta 80 caracteres.'
+      : null,
+    fecha:
+      fecha === '' ? 'Indicá cuándo se aplicó.'
+      : hoy && fecha > hoy ? 'La fecha de aplicación no puede ser futura.'
+      : null,
+    proxima: proxima !== '' && fecha !== '' && proxima <= fecha ? 'La próxima dosis tiene que ser después de la aplicación.' : null,
+    notas: notas.length > 500 ? 'Las notas pueden tener hasta 500 caracteres.' : null,
+  })
+}
