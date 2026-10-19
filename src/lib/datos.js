@@ -146,6 +146,30 @@ export async function obtenerEstudio(id) {
   return estudio
 }
 
+// Lo que se borraría junto con una mascota (para avisarle a la veterinaria antes de confirmar)
+export async function obtenerResumenParaEliminar(mascotaId) {
+  const supabase = await crearClienteServidor()
+  // head: true → no trae filas, solo cuántas hay
+  const contar = async (tabla) => {
+    const { count, error } = await supabase.from(tabla).select('id', { count: 'exact', head: true }).eq('mascota_id', mascotaId)
+    if (error) throw new Error(`Error al consultar Supabase: ${error.message}`)
+    return count ?? 0
+  }
+  const [turnos, vacunas, estudios, pagos] = await Promise.all([
+    contar('turnos'),
+    contar('vacunas'),
+    revisar(await supabase.from('estudios').select('archivo_path').eq('mascota_id', mascotaId)),
+    revisar(await supabase.from('pagos').select('estado').eq('mascota_id', mascotaId)),
+  ])
+  return {
+    turnos,
+    vacunas,
+    estudios: estudios.length,
+    archivos: estudios.map((e) => e.archivo_path).filter(Boolean),
+    pagos: pagos.map((p) => p.estado),
+  }
+}
+
 export async function obtenerPagos() {
   const supabase = await crearClienteServidor()
   const filas = revisar(await supabase.from('pagos').select('*, mascotas(nombre, email_duenio)').order('creado_en', { ascending: false }))

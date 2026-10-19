@@ -39,6 +39,7 @@ function TablaPacientes({ pacientes }) {
               <th>Raza</th>
               <th>Edad</th>
               <th>Dueño/a</th>
+              <th><span className="visualmente-oculto">Acciones</span></th>
             </tr>
           </thead>
           <tbody>
@@ -54,11 +55,16 @@ function TablaPacientes({ pacientes }) {
                   {p.duenio}{' '}
                   {!p.registrado && <Badge estado="Sin registrar" />}
                 </td>
+                <td>
+                  <Link href={`/veterinaria/pacientes/${p.id}/editar`} className="enlace">
+                    Editar<span className="visualmente-oculto"> a {p.nombre}</span>
+                  </Link>
+                </td>
               </tr>
             ))}
             {filtrados.length === 0 && (
               <tr>
-                <td colSpan={5} className="texto-suave">No hay pacientes que coincidan con “{busqueda}”.</td>
+                <td colSpan={6} className="texto-suave">No hay pacientes que coincidan con “{busqueda}”.</td>
               </tr>
             )}
           </tbody>

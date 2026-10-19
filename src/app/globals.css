@@ -458,6 +458,9 @@ img { max-width: 100%; }
 .tabla .acciones-botones { align-items: flex-start; justify-content: flex-start; }
 .btn-chico { padding: 0.3rem 0.8rem; font-size: 0.85rem; border-width: 2px; }
 .btn-peligro { background: var(--blanco); color: #a3261b; border-color: #a3261b; }
+.btn-peligro:hover { background: #fdf1ef; }
+.btn-peligro-lleno { background: #a3261b; color: #fff; border-color: #a3261b; }
+.btn-peligro-lleno:hover { background: #861d14; border-color: #861d14; }
 .btn:disabled { opacity: 0.55; cursor: not-allowed; transform: none; box-shadow: none; }
 .texto-chico { font-size: 0.82rem; color: var(--texto-suave); max-width: 220px; }
 
@@ -506,6 +509,7 @@ img { max-width: 100%; }
 .volver { align-self: flex-start; font-weight: 800; color: var(--color-panel); }
 .volver:hover { text-decoration: underline; }
 .ficha { display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap; }
+.ficha-editar { margin-left: auto; align-self: flex-start; }
 .ficha-ilustracion { width: 120px; flex-shrink: 0; }
 .ficha h1 { color: var(--color-panel); }
 .grid-ficha { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.5rem; }
@@ -754,4 +758,25 @@ summary:focus-visible {
 .aviso-panel { margin-top: 1.5rem; border-left: 6px solid var(--mandarina); }
 @media (max-width: 640px) {
   .aviso-vacuna { flex-direction: column; align-items: stretch; }
+}
+
+/* ===== Editar y eliminar pacientes ===== */
+.aviso-exito { background: var(--menta); color: var(--verde-oscuro); border-radius: 12px; padding: 0.7rem 1rem; font-weight: 700; }
+.aviso-exito::before { content: '✓ '; }
+.zona-peligro { border-color: #e9b4ad; display: grid; gap: 0.8rem; justify-items: start; }
+.zona-peligro h2 { margin: 0; font-size: 1.25rem; color: #8f1d14; }
+
+/* Ventana de confirmación (<dialog> nativo) */
+.dialogo {
+  width: min(92vw, 30rem); padding: 1.5rem; border: 0; border-radius: var(--radio);
+  background: var(--blanco); color: var(--texto); box-shadow: 0 24px 60px rgba(0, 0, 0, 0.3);
+}
+.dialogo::backdrop { background: rgba(26, 48, 32, 0.55); }
+.dialogo h2 { font-size: 1.4rem; margin-bottom: 0.8rem; }
+.dialogo ul { margin: 0.4rem 0 0.8rem; padding-left: 1.2rem; }
+.dialogo #dialogo-texto { display: grid; gap: 0.4rem; margin-bottom: 1rem; }
+.dialogo .form-error { margin-bottom: 1rem; }
+.dialogo-botones { display: flex; flex-wrap: wrap; gap: 0.6rem; justify-content: flex-end; }
+@media (prefers-reduced-motion: no-preference) {
+  .dialogo[open] { animation: desplegar 0.2s ease-out; }
 }

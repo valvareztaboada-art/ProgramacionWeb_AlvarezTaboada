@@ -9,8 +9,9 @@ export async function generateMetadata({ params }) {
   return { title: mascota?.nombre ?? 'Paciente' }
 }
 
-export default async function FichaPaciente({ params }) {
-  const { id } = await params
+// ?editado=1 llega después de guardar cambios en /editar
+export default async function FichaPaciente({ params, searchParams }) {
+  const [{ id }, { editado }] = await Promise.all([params, searchParams])
   const mascota = await obtenerMascota(id)
 
   if (!mascota) notFound()
@@ -29,6 +30,7 @@ export default async function FichaPaciente({ params }) {
       estudios={estudios}
       volver={{ href: '/veterinaria/pacientes', label: 'Pacientes' }}
       esVeterinaria
+      aviso={editado ? 'Listo, los datos quedaron guardados.' : null}
     />
   )
 }
