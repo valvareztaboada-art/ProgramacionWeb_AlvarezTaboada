@@ -384,3 +384,41 @@ test('vacunas: el cliente ve las de sus mascotas pero no puede marcarlas ni modi
   const marcar = await como(ANA, 'update vacunas set avisado_en = now() returning id')
   assert.equal(marcar.filas.length, 0)
 })
+
+// ---------- Editar y eliminar pacientes ----------
+
+test('pacientes: la veterinaria corrige los datos; el cliente no puede modificar ni borrar', async () => {
+  const vet = await como(VET, `update mascotas set raza = 'Golden', edad = 5 where nombre = 'Luna' returning raza, edad`)
+  assert.deepEqual(vet.filas[0], { raza: 'Golden', edad: 5 })
+  const editar = await como(ANA, `update mascotas set nombre = 'Hackeada' where nombre = 'Luna' returning id`)
+  assert.equal(editar.filas.length, 0)
+  const borrar = await como(ANA, `delete from mascotas where nombre = 'Michi' returning id`)
+  assert.equal(borrar.filas.length, 0)
+})
+
+test('pacientes: el email del dueño/a se guarda en minúsculas (si no, se rechaza)', async () => {
+  const r = await como(VET, `update mascotas set email_duenio = 'Ana.Gomez@Mail.com' where nombre = 'Luna'`)
+  assert.match(r.error, /mascotas_email_duenio_check/)
+})
+
+test('pacientes: NO se puede eliminar una mascota con pagos registrados', async () => {
+  const r = await como(VET, `delete from mascotas where nombre = 'Rocco' returning id`)
+  assert.match(r.error, /No se puede eliminar a Rocco porque tiene pagos registrados/)
+  const sigue = await como(VET, `select count(*)::int as n from mascotas where nombre = 'Rocco'`)
+  assert.equal(sigue.filas[0].n, 1)
+})
+
+test('pacientes: al eliminar una mascota sin pagos se borra todo lo suyo (cobros pendientes incluidos)', async () => {
+  const id = (await como(VET, `insert into mascotas (nombre, especie, email_duenio) values ('Error de carga', 'Gato', 'nadie@mail.com') returning id`)).filas[0].id
+  await como(VET, `insert into turnos (mascota_id, especialidad_id, fecha, hora) values (${id}, 'consulta', '${proximoLunes}', '15:00')`)
+  await como(VET, `insert into vacunas (mascota_id, vacuna, linea, fecha_aplicacion) values (${id}, 'Rabia', 'rabia', current_date)`)
+  await como(VET, `insert into estudios (mascota_id, titulo, fecha) values (${id}, 'Análisis', current_date)`)
+  await como(VET, `insert into pagos (mascota_id, concepto, monto) values (${id}, 'Consulta', 1000)`)
+
+  const borrar = await como(VET, `delete from mascotas where id = ${id} returning id`)
+  assert.equal(borrar.filas.length, 1)
+  const quedan = await como(VET, `select
+    (select count(*) from turnos where mascota_id = ${id}) + (select count(*) from vacunas where mascota_id = ${id}) +
+    (select count(*) from estudios where mascota_id = ${id}) + (select count(*) from pagos where mascota_id = ${id}) as n`)
+  assert.equal(Number(quedan.filas[0].n), 0)
+})

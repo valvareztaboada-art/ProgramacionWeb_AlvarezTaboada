@@ -1,8 +1,8 @@
 'use client'
 
 // Client Component: usa el hook useFormulario y eventos (onChange, onSubmit).
-// Inserta la mascota en Supabase. Solo funciona para la veterinaria:
-// el RLS rechaza el INSERT de cualquier otro usuario.
+// Sirve para cargar un paciente nuevo (INSERT) o, si recibe "paciente", para corregir
+// sus datos (UPDATE). Solo funciona para la veterinaria: el RLS rechaza a cualquier otro usuario.
 
 import { useState } from 'react'
 import Link from 'next/link'
@@ -16,9 +16,25 @@ import { mensajeDeError } from '@/lib/supabase/mensajes'
 
 const VACIO = { nombre: '', especie: '', raza: '', edad: '', emailDuenio: '' }
 
+// Los datos de un paciente existente, con la forma que usa el formulario
+function datosDe(paciente) {
+  return {
+    nombre: paciente.nombre,
+    especie: paciente.especie,
+    raza: paciente.raza ?? '',
+    edad: paciente.edad ?? '',
+    emailDuenio: paciente.emailDuenio,
+  }
+}
+
 // duenios: los dueños/as que ya existen (con o sin cuenta), para sugerirlos
-function FormularioPaciente({ duenios = [] }) {
-  const { datos, errores, handleChange, cambiar, validarAlEnviar, reiniciar } = useFormulario(VACIO, validarPaciente)
+// paciente: si viene, el formulario edita a ese paciente en lugar de crear uno nuevo
+function FormularioPaciente({ duenios = [], paciente = null }) {
+  const editando = Boolean(paciente)
+  const { datos, errores, handleChange, cambiar, validarAlEnviar, reiniciar } =
+    useFormulario(editando ? datosDe(paciente) : VACIO, validarPaciente)
+  // Al editar, si cambia el email la mascota pasa a otra cuenta: lo avisamos
+  const cambioDeDuenio = editando && datos.emailDuenio.trim().toLowerCase() !== paciente.emailDuenio
   const duenioElegido = duenios.find((d) => d.email === datos.emailDuenio.trim().toLowerCase())
   const [errorGeneral, setErrorGeneral] = useState('')
   const [cargando, setCargando] = useState(false)
@@ -32,14 +48,28 @@ function FormularioPaciente({ duenios = [] }) {
 
     setCargando(true)
     try {
-      const { error } = await crearClienteNavegador().from('mascotas').insert({
+      const fila = {
         nombre: datos.nombre.trim(),
         especie: datos.especie,
         raza: datos.raza.trim() || null,
         edad: datos.edad === '' ? null : Number(datos.edad),
         email_duenio: datos.emailDuenio.trim().toLowerCase(),
-      })
+      }
+      const mascotas = crearClienteNavegador().from('mascotas')
 
+      if (editando) {
+        // .select() devuelve las filas modificadas: si viene vacío, el RLS no lo dejó
+        const { data, error } = await mascotas.update(fila).eq('id', paciente.id).select('id')
+        if (error || data.length === 0) {
+          setErrorGeneral(mensajeDeError(error ?? { code: '42501' }))
+          return
+        }
+        router.push(`/veterinaria/pacientes/${paciente.id}?editado=1`)
+        router.refresh()
+        return
+      }
+
+      const { error } = await mascotas.insert(fila)
       if (error) {
         setErrorGeneral(mensajeDeError(error))
         return
@@ -121,13 +151,22 @@ function FormularioPaciente({ duenios = [] }) {
           <SelectorDuenio id="emailDuenio" duenios={duenios} valor={datos.emailDuenio}
             onCambiar={(email) => cambiar({ emailDuenio: email })} invalido={Boolean(errores.emailDuenio)} />
         </Campo>
+        {cambioDeDuenio && (
+          <p className="aviso-bloqueo" role="status">
+            Ojo: {paciente.nombre} va a pasar a la cuenta de <strong>{datos.emailDuenio.trim().toLowerCase() || 'ese email'}</strong> y
+            {' '}deja de verse en la de {paciente.emailDuenio}. Sus turnos, vacunas y estudios se mueven con la mascota.
+          </p>
+        )}
       </fieldset>
 
       {errorGeneral && <p className="form-error" role="alert">{errorGeneral}</p>}
 
-      <button type="submit" className="btn btn-primario" disabled={cargando}>
-        {cargando ? 'Guardando…' : 'Guardar paciente'}
-      </button>
+      <div className="form-exito-botones">
+        <button type="submit" className="btn btn-primario" disabled={cargando}>
+          {cargando ? 'Guardando…' : editando ? 'Guardar cambios' : 'Guardar paciente'}
+        </button>
+        {editando && <Link href={`/veterinaria/pacientes/${paciente.id}`} className="btn btn-secundario">Cancelar</Link>}
+      </div>
     </form>
   )
 }
