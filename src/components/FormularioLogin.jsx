@@ -18,8 +18,9 @@ import { validarLogin } from '@/lib/validaciones'
 import { esperaTrasFallos, formatearEspera } from '@/lib/intentos'
 import { crearClienteNavegador } from '@/lib/supabase/navegador'
 import { mensajeDeError } from '@/lib/supabase/mensajes'
+import { destinoDespuesDelLogin } from '@/lib/destino'
 
-function FormularioLogin() {
+function FormularioLogin({ siguiente }) {
   const { datos, errores, handleChange, validarAlEnviar } = useFormulario({ email: '', password: '' }, validarLogin)
   const [errorGeneral, setErrorGeneral] = useState('')
   const [cargando, setCargando] = useState(false)
@@ -60,9 +61,10 @@ function FormularioLogin() {
         return
       }
 
-      // ¿Es cliente o veterinaria? Lo dice su perfil (no lo elige el usuario)
+      // ¿Es cliente o veterinaria? Lo dice su perfil (no lo elige el usuario).
+      // Si venía de una página privada de su panel, vuelve ahí; si no, a su inicio.
       const { data: perfil } = await supabase.from('perfiles').select('rol').eq('id', data.user.id).single()
-      router.push(perfil?.rol === 'veterinaria' ? '/veterinaria' : '/cliente')
+      router.push(destinoDespuesDelLogin(siguiente, perfil?.rol))
       router.refresh()
     } catch (error) {
       setErrorGeneral(mensajeDeError(error))
