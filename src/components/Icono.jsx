@@ -88,6 +88,15 @@ const trazos = {
       <path d="M9 17l-5-5 5-5M4 12h11" />
     </>
   ),
+  escudo: (
+    <>
+      <path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z" />
+      <path d="m9 12 2 2 4-4" />
+    </>
+  ),
+  flecha: <path d="M5 12h14M13 6l6 6-6 6" />,
+  menu: <path d="M4 7h16M4 12h16M4 17h16" />,
+  cerrar: <path d="M6 6l12 12M18 6 6 18" />,
 }
 
 function Icono({ nombre, size = 22 }) {

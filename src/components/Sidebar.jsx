@@ -8,7 +8,7 @@ import BotonCerrarSesion from './BotonCerrarSesion'
 function Sidebar({ titulo, menu, usuario }) {
   return (
     <aside className="sidebar">
-      <Logo claro />
+      <Logo />
       <p className="sidebar-titulo">{titulo}</p>
       <nav aria-label="Menú del panel">
         <ul>

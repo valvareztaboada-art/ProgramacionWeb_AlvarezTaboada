@@ -51,6 +51,8 @@ export async function proxy(request) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     url.search = ''
+    // Para volver a esta página después de ingresar (el login valida que sea segura)
+    url.searchParams.set('siguiente', ruta)
     return NextResponse.redirect(url)
   }
 

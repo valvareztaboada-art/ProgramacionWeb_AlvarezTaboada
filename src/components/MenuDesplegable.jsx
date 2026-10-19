@@ -4,10 +4,25 @@
 // Los enlaces llegan como children desde Navbar (Server Component).
 // En pantallas grandes el botón se oculta con CSS y el menú se ve siempre.
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import Icono from './Icono'
 
 function MenuDesplegable({ children }) {
   const [abierto, setAbierto] = useState(false)
+  const boton = useRef(null)
+
+  // Con Escape se cierra y el foco vuelve al botón (accesibilidad con teclado)
+  useEffect(() => {
+    if (!abierto) return
+    function alApretarTecla(e) {
+      if (e.key === 'Escape') {
+        setAbierto(false)
+        boton.current?.focus()
+      }
+    }
+    document.addEventListener('keydown', alApretarTecla)
+    return () => document.removeEventListener('keydown', alApretarTecla)
+  }, [abierto])
 
   // Si se toca un enlace del menú, se cierra (útil en el celular)
   function handleClickCapture(e) {
@@ -17,19 +32,15 @@ function MenuDesplegable({ children }) {
   return (
     <>
       <button
+        ref={boton}
         type="button"
         className="menu-boton"
         aria-expanded={abierto}
         aria-controls="menu-principal"
         onClick={() => setAbierto(!abierto)}
       >
-        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-          strokeWidth="2.2" strokeLinecap="round" aria-hidden="true">
-          {abierto
-            ? <path d="M6 6l12 12M18 6 6 18" />
-            : <path d="M4 7h16M4 12h16M4 17h16" />}
-        </svg>
-        <span className="visualmente-oculto">{abierto ? 'Cerrar menú' : 'Abrir menú'}</span>
+        <Icono nombre={abierto ? 'cerrar' : 'menu'} />
+        {abierto ? 'Cerrar' : 'Menú'}
       </button>
 
       <nav

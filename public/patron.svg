@@ -16,7 +16,7 @@
     </g>
     <path id="corazon" d="M0 7 C-10 0 -10 -7 -5.5 -8.5 C-2.5 -9.5 0 -7 0 -5 C0 -7 2.5 -9.5 5.5 -8.5 C10 -7 10 0 0 7 Z"/>
   </defs>
-  <g fill="#f5d3a6">
+  <g fill="#e4d9c4">
     <use href="#huella" transform="translate(40 42) rotate(-20)"/>
     <use href="#huella" transform="translate(165 135) rotate(25)"/>
     <use href="#hueso" transform="translate(155 45) rotate(30)"/>

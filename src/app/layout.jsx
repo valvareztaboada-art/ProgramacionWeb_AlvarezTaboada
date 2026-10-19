@@ -1,17 +1,17 @@
-import { Fredoka, Nunito } from 'next/font/google'
+import { Bricolage_Grotesque, Figtree } from 'next/font/google'
 import './globals.css'
 
-// next/font descarga las tipografías en el build y las sirve desde nuestro dominio
-const fredoka = Fredoka({
+// next/font descarga las tipografías en el build y las sirve desde nuestro dominio.
+// Las dos son "variables": un solo archivo trae todos los grosores.
+const bricolage = Bricolage_Grotesque({
   subsets: ['latin'],
-  weight: ['500', '600', '700'],
-  variable: '--font-fredoka',
+  axes: ['opsz'], // tamaño óptico: los títulos grandes se dibujan más ajustados
+  variable: '--font-bricolage',
 })
 
-const nunito = Nunito({
+const figtree = Figtree({
   subsets: ['latin'],
-  weight: ['400', '600', '700', '800'],
-  variable: '--font-nunito',
+  variable: '--font-figtree',
 })
 
 export const metadata = {
@@ -25,7 +25,7 @@ export const metadata = {
 // Layout raíz: envuelve TODAS las páginas del sitio
 export default function RootLayout({ children }) {
   return (
-    <html lang="es" className={`${fredoka.variable} ${nunito.variable}`}>
+    <html lang="es" className={`${bricolage.variable} ${figtree.variable}`}>
       <body>{children}</body>
     </html>
   )
