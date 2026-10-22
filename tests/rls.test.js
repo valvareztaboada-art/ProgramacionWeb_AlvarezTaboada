@@ -422,3 +422,20 @@ test('pacientes: al eliminar una mascota sin pagos se borra todo lo suyo (cobros
     (select count(*) from estudios where mascota_id = ${id}) + (select count(*) from pagos where mascota_id = ${id}) as n`)
   assert.equal(Number(quedan.filas[0].n), 0)
 })
+
+// ---------- Fecha de nacimiento ----------
+
+test('fecha de nacimiento: la base rechaza fechas futuras o de hace más de 40 años', async () => {
+  const futura = await como(VET, `update mascotas set fecha_nacimiento = current_date + 1 where nombre = 'Luna'`)
+  assert.match(futura.error, /mascotas_fecha_nacimiento_check/)
+  const vieja = await como(VET, `update mascotas set fecha_nacimiento = '1970-01-01' where nombre = 'Luna'`)
+  assert.match(vieja.error, /mascotas_fecha_nacimiento_check/)
+  const hoy = await como(VET, `update mascotas set fecha_nacimiento = current_date where nombre = 'Kiwi' returning id`)
+  assert.equal(hoy.filas.length, 1)
+})
+
+test('fecha de nacimiento: un paciente viejo pasa de "edad" fija a fecha de nacimiento', async () => {
+  const r = await como(VET, `update mascotas set fecha_nacimiento = '2025-01-10', edad = null where nombre = 'Kiwi'
+    returning fecha_nacimiento::text as fecha, edad`)
+  assert.deepEqual(r.filas[0], { fecha: '2025-01-10', edad: null })
+})

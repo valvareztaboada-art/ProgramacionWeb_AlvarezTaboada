@@ -13,11 +13,12 @@
 create temporary table fechas as
 select (current_date + (8 - extract(isodow from current_date))::int) as lunes;
 
-insert into public.mascotas (nombre, especie, raza, edad, email_duenio) values
-  ('Luna',  'Perro', 'Golden Retriever', 4, 'ana.gomez@mail.com'),
-  ('Michi', 'Gato',  'Siamés',           2, 'ana.gomez@mail.com'),
-  ('Rocco', 'Perro', 'Bulldog Francés',  6, 'juan.perez@mail.com'),
-  ('Kiwi',  'Ave',   'Cotorra',          1, 'sofia.diaz@mail.com');
+-- Kiwi queda con la "edad" vieja (sin fecha de nacimiento), como un paciente cargado antes del cambio
+insert into public.mascotas (nombre, especie, raza, fecha_nacimiento, edad, email_duenio) values
+  ('Luna',  'Perro', 'Golden Retriever', '2022-03-14', null, 'ana.gomez@mail.com'),
+  ('Michi', 'Gato',  'Siamés',           '2024-06-02', null, 'ana.gomez@mail.com'),
+  ('Rocco', 'Perro', 'Bulldog Francés',  '2020-09-20', null, 'juan.perez@mail.com'),
+  ('Kiwi',  'Ave',   'Cotorra',          null,         1,    'sofia.diaz@mail.com');
 
 insert into public.turnos (mascota_id, especialidad_id, fecha, hora, motivo, estado)
 select m.id, t.especialidad_id, f.lunes + t.dias, t.hora::time, t.motivo, t.estado

@@ -7,6 +7,9 @@
 // Además, los textos se SANITIZAN: se les sacan etiquetas HTML y caracteres de control.
 
 import { z } from 'zod'
+import { errorDeFechaNacimiento } from './validaciones.js'
+import { hoyISO } from './horarios.js'
+import { textoDeEdad } from './formato.js'
 
 export const ESPECIES = ['Perro', 'Gato', 'Ave', 'Otro']
 
@@ -33,11 +36,13 @@ const camposPaciente = {
   raza: textoLimpio.pipe(z.string().max(40, 'La raza puede tener hasta 40 caracteres.'))
     .transform((r) => r || null)
     .nullish(),
-  // Llega como número o vacío (null)
-  edad: z.number({ error: 'Ingresá una edad en años enteros, entre 0 y 40.' })
-    .int('Ingresá una edad en años enteros, entre 0 y 40.')
-    .min(0, 'Ingresá una edad en años enteros, entre 0 y 40.')
-    .max(40, 'Ingresá una edad en años enteros, entre 0 y 40.')
+  // "AAAA-MM-DD" o null. Misma regla que el formulario: no futura ni de hace más de 40 años.
+  // "hoy" se calcula en cada pedido (en la hora de Argentina)
+  fechaNacimiento: z.string({ error: 'Ingresá una fecha válida.' })
+    .superRefine((fecha, contexto) => {
+      const error = errorDeFechaNacimiento(fecha, hoyISO())
+      if (error) contexto.addIssue({ code: 'custom', message: error })
+    })
     .nullish(),
   emailDuenio: z.string({ error: 'Ingresá el email del dueño/a.' })
     .trim()
@@ -45,7 +50,7 @@ const camposPaciente = {
     .pipe(z.email('Ingresá un email válido (ej: nombre@mail.com).').max(254)),
 }
 
-// POST /api/v1/pacientes → todos los campos obligatorios salvo raza y edad
+// POST /api/v1/pacientes → todos los campos obligatorios salvo raza y fecha de nacimiento
 // strict(): si mandan campos que no existen (ej: "id" o "rol"), se rechaza
 export const esquemaNuevoPaciente = z.strictObject(camposPaciente)
 
@@ -71,7 +76,9 @@ export function aPacienteDeLaApi(fila) {
     nombre: fila.nombre,
     especie: fila.especie,
     raza: fila.raza,
-    edad: fila.edad,
+    fechaNacimiento: fila.fecha_nacimiento,
+    // Se calcula cada vez (o es la edad vieja, si no tiene fecha): "4 años", "8 meses"...
+    edad: textoDeEdad({ fechaNacimiento: fila.fecha_nacimiento, edad: fila.edad }, hoyISO()) || null,
     emailDuenio: fila.email_duenio,
   }
 }
@@ -82,7 +89,11 @@ export function aFilaDeMascota(datos) {
   if ('nombre' in datos) fila.nombre = datos.nombre
   if ('especie' in datos) fila.especie = datos.especie
   if ('raza' in datos) fila.raza = datos.raza ?? null
-  if ('edad' in datos) fila.edad = datos.edad ?? null
+  if ('fechaNacimiento' in datos) {
+    fila.fecha_nacimiento = datos.fechaNacimiento || null
+    // Con la fecha cargada, la edad vieja (fija) ya no hace falta
+    if (fila.fecha_nacimiento) fila.edad = null
+  }
   if ('emailDuenio' in datos) fila.email_duenio = datos.emailDuenio
   return fila
 }

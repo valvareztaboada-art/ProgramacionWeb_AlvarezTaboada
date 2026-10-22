@@ -20,13 +20,16 @@ test('registro: detecta email inválido, contraseña corta y contraseñas distin
 })
 
 test('paciente: pide nombre, especie y email del dueño/a', () => {
-  const errores = validarPaciente({ nombre: '', especie: '', edad: '', emailDuenio: '' })
+  const errores = validarPaciente({ nombre: '', especie: '', fechaNacimiento: '', emailDuenio: '' }, HOY)
   assert.deepEqual(Object.keys(errores).sort(), ['emailDuenio', 'especie', 'nombre'])
 })
 
-test('paciente: la edad tiene que estar entre 0 y 40', () => {
-  const errores = validarPaciente({ nombre: 'Toby', especie: 'Perro', edad: '50', emailDuenio: 'a@b.com' })
-  assert.ok(errores.edad)
+test('paciente: la fecha de nacimiento no puede ser futura ni de hace más de 40 años', () => {
+  const base = { nombre: 'Toby', especie: 'Perro', emailDuenio: 'a@b.com' }
+  assert.equal(validarPaciente({ ...base, fechaNacimiento: '2099-01-01' }, HOY).fechaNacimiento, 'La fecha de nacimiento no puede ser futura.')
+  assert.ok(validarPaciente({ ...base, fechaNacimiento: '1970-05-01' }, HOY).fechaNacimiento)
+  assert.ok(validarPaciente({ ...base, fechaNacimiento: '2024-13-45' }, HOY).fechaNacimiento)
+  assert.ok(validarPaciente({ ...base, fechaNacimiento: '2023-02-30' }, HOY).fechaNacimiento)
 })
 
 test('turno: completo y en fecha futura no da errores', () => {
@@ -68,11 +71,11 @@ test('registro: el nombre tiene que tener letras', () => {
   assert.ok(validarRegistro({ ...base, nombre: '   ' }).nombre)
 })
 
-test('paciente: la edad tiene que ser un número entero', () => {
+test('paciente: la fecha de nacimiento es opcional, y hoy mismo es válida', () => {
   const base = { nombre: 'Toby', especie: 'Perro', emailDuenio: 'a@b.com' }
-  assert.ok(validarPaciente({ ...base, edad: '2.5' }).edad)
-  assert.deepEqual(validarPaciente({ ...base, edad: '' }), {})
-  assert.deepEqual(validarPaciente({ ...base, edad: '0' }), {})
+  assert.deepEqual(validarPaciente({ ...base, fechaNacimiento: '' }, HOY), {})
+  assert.deepEqual(validarPaciente({ ...base, fechaNacimiento: HOY }, HOY), {})
+  assert.deepEqual(validarPaciente({ ...base, fechaNacimiento: '2021-05-10' }, HOY), {})
 })
 
 test('turno: el comentario no puede ser demasiado largo', () => {

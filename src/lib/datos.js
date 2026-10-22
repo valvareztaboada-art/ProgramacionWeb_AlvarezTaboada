@@ -7,6 +7,8 @@
 import { cache } from 'react'
 import { crearClienteServidor } from '@/lib/supabase/servidor'
 import { armarListaDeDuenios } from '@/lib/duenios'
+import { textoDeEdad } from '@/lib/formato'
+import { hoyISO } from '@/lib/horarios'
 
 // Si una consulta falla, mostramos el error (lo atrapa el error boundary de Next)
 function revisar({ data, error }) {
@@ -49,7 +51,10 @@ function aMascota(fila, duenios) {
     nombre: fila.nombre,
     especie: fila.especie,
     raza: fila.raza ?? '',
-    edad: fila.edad,
+    fechaNacimiento: fila.fecha_nacimiento,
+    edad: fila.edad, // la edad vieja (fija), solo si se cargó antes de existir la fecha de nacimiento
+    // La edad se calcula en el servidor, así la tabla, la ficha y el panel del cliente dicen lo mismo
+    edadTexto: textoDeEdad({ fechaNacimiento: fila.fecha_nacimiento, edad: fila.edad }, hoyISO()),
     emailDuenio: fila.email_duenio,
     duenio: duenios.get(fila.email_duenio) ?? fila.email_duenio,
     registrado: duenios.has(fila.email_duenio),

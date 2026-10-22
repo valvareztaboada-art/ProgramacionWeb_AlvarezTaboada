@@ -7,14 +7,14 @@ import HistorialVacunas from './HistorialVacunas'
 import MostrarMas from './MostrarMas'
 import { proximasVacunas } from '@/lib/vacunas'
 import { hoyISO } from '@/lib/horarios'
-import { formatearEdad, formatearFecha } from '@/lib/formato'
+import { formatearFecha, formatearFechaCorta } from '@/lib/formato'
 import { IlustracionMascota } from './ilustraciones/Ilustraciones'
 
 // Ficha completa de una mascota. La usan las dos interfaces:
 // /cliente/mascotas/[id] y /veterinaria/pacientes/[id]
 // Si la ve la veterinaria (esVeterinaria), cada turno activo muestra sus acciones.
 function FichaMascota({ mascota, turnos, vacunas, estudios, volver, esVeterinaria = false, aviso = null }) {
-  const detalle = [mascota.especie, mascota.raza, formatearEdad(mascota.edad)].filter(Boolean).join(' · ')
+  const detalle = [mascota.especie, mascota.raza, mascota.edadTexto].filter(Boolean).join(' · ')
   // Los turnos más nuevos primero
   const turnosOrdenados = [...turnos].reverse()
 
@@ -28,6 +28,9 @@ function FichaMascota({ mascota, turnos, vacunas, estudios, volver, esVeterinari
         <div>
           <h1>{mascota.nombre}</h1>
           <p className="texto-suave">{detalle}</p>
+          {mascota.fechaNacimiento && (
+            <p className="texto-suave">Nació el {formatearFechaCorta(mascota.fechaNacimiento)}</p>
+          )}
           <p>
             Dueño/a: <strong>{mascota.duenio}</strong>
             {mascota.registrado && <span className="texto-suave"> · {mascota.emailDuenio}</span>}
