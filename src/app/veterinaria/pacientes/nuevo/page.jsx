@@ -2,6 +2,7 @@ import Link from 'next/link'
 import PageHeader from '@/components/PageHeader'
 import FormularioPaciente from '@/components/FormularioPaciente'
 import { obtenerDuenios } from '@/lib/datos'
+import { hoyISO } from '@/lib/horarios'
 
 export const metadata = { title: 'Nuevo paciente' }
 
@@ -19,7 +20,7 @@ export default async function NuevoPaciente() {
         descripcion="Cargá la mascota y elegí a su dueño/a. Si es nuevo/a, no hace falta que ya tenga cuenta."
       />
       <div className="card form-card">
-        <FormularioPaciente duenios={duenios} />
+        <FormularioPaciente duenios={duenios} hoy={hoyISO()} />
       </div>
     </>
   )

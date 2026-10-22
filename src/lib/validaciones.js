@@ -53,9 +53,29 @@ export function validarRegistro({ nombre, email, telefono = '', password, confir
   })
 }
 
-export function validarPaciente({ nombre, especie, edad, emailDuenio }) {
+// Ningún paciente tiene más de 40 años (la base controla lo mismo)
+export const FECHA_NACIMIENTO_MINIMA = '1985-01-01'
+
+// "AAAA-MM-DD" que exista en el calendario (ej: rechaza 2023-02-30)
+function esFechaReal(fecha) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha)) return false
+  const d = new Date(`${fecha}T00:00:00Z`)
+  return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === fecha
+}
+
+// Fecha de nacimiento ("AAAA-MM-DD"). Es opcional: vacía no es error.
+// La usan el formulario y el esquema del servidor (esquemas.js), así los mensajes son iguales.
+export function errorDeFechaNacimiento(fecha, hoy) {
+  if (fecha === '' || fecha === null || fecha === undefined) return null
+  if (!esFechaReal(fecha)) return 'Ingresá una fecha válida.'
+  if (fecha > hoy) return 'La fecha de nacimiento no puede ser futura.'
+  if (fecha < FECHA_NACIMIENTO_MINIMA) return 'Revisá el año: es de hace más de 40 años.'
+  return null
+}
+
+// "hoy" se recibe como parámetro para poder testear la función con cualquier fecha
+export function validarPaciente({ nombre, especie, fechaNacimiento, emailDuenio }, hoy) {
   const nombreLimpio = nombre.trim()
-  const edadNumero = Number(edad)
 
   return sinVacios({
     nombre:
@@ -63,11 +83,7 @@ export function validarPaciente({ nombre, especie, edad, emailDuenio }) {
       : nombreLimpio.length > 40 ? 'El nombre puede tener hasta 40 caracteres.'
       : null,
     especie: especie === '' ? 'Elegí la especie.' : null,
-    edad:
-      edad === '' ? null
-      : !Number.isInteger(edadNumero) || edadNumero < 0 || edadNumero > 40
-        ? 'Ingresá una edad en años enteros, entre 0 y 40.'
-        : null,
+    fechaNacimiento: errorDeFechaNacimiento(fechaNacimiento, hoy),
     emailDuenio: validarEmail(emailDuenio),
   })
 }

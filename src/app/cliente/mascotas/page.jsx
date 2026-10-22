@@ -1,6 +1,5 @@
 import Link from 'next/link'
 import PageHeader from '@/components/PageHeader'
-import { formatearEdad } from '@/lib/formato'
 import { IlustracionMascota } from '@/components/ilustraciones/Ilustraciones'
 import { obtenerMascotas } from '@/lib/datos'
 
@@ -17,7 +16,7 @@ export default async function MisMascotas() {
           <Link key={m.id} href={`/cliente/mascotas/${m.id}`} className="card card-mascota">
             <IlustracionMascota especie={m.especie} className="card-mascota-ilustracion" />
             <h2>{m.nombre}</h2>
-            <p className="texto-suave">{[m.raza, formatearEdad(m.edad)].filter(Boolean).join(' · ')}</p>
+            <p className="texto-suave">{[m.raza, m.edadTexto].filter(Boolean).join(' · ')}</p>
           </Link>
         ))}
       </div>

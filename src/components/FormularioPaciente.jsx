@@ -14,7 +14,7 @@ import { useFormulario } from '@/hooks/useFormulario'
 import { validarPaciente } from '@/lib/validaciones'
 import { llamarApi } from '@/lib/api/cliente'
 
-const VACIO = { nombre: '', especie: '', raza: '', edad: '', emailDuenio: '' }
+const VACIO = { nombre: '', especie: '', raza: '', fechaNacimiento: '', emailDuenio: '' }
 
 // Los datos de un paciente existente, con la forma que usa el formulario
 function datosDe(paciente) {
@@ -22,17 +22,20 @@ function datosDe(paciente) {
     nombre: paciente.nombre,
     especie: paciente.especie,
     raza: paciente.raza ?? '',
-    edad: paciente.edad ?? '',
+    fechaNacimiento: paciente.fechaNacimiento ?? '',
     emailDuenio: paciente.emailDuenio,
   }
 }
 
 // duenios: los dueños/as que ya existen (con o sin cuenta), para sugerirlos
 // paciente: si viene, el formulario edita a ese paciente en lugar de crear uno nuevo
-function FormularioPaciente({ duenios = [], paciente = null }) {
+// hoy: "AAAA-MM-DD", lo calcula el servidor (así el navegador y el servidor usan la misma fecha)
+function FormularioPaciente({ duenios = [], paciente = null, hoy }) {
   const editando = Boolean(paciente)
   const { datos, errores, handleChange, cambiar, validarAlEnviar, reiniciar, mostrarErroresDelServidor } =
-    useFormulario(editando ? datosDe(paciente) : VACIO, validarPaciente)
+    useFormulario(editando ? datosDe(paciente) : VACIO, (d) => validarPaciente(d, hoy))
+  // Paciente cargado antes de que existiera la fecha de nacimiento: tiene solo la edad (fija)
+  const tieneSoloEdadVieja = editando && !paciente.fechaNacimiento && paciente.edad !== null && paciente.edad !== undefined
   // Al editar, si cambia el email la mascota pasa a otra cuenta: lo avisamos
   const cambioDeDuenio = editando && datos.emailDuenio.trim().toLowerCase() !== paciente.emailDuenio
   const duenioElegido = duenios.find((d) => d.email === datos.emailDuenio.trim().toLowerCase())
@@ -56,7 +59,7 @@ function FormularioPaciente({ duenios = [], paciente = null }) {
           nombre: datos.nombre,
           especie: datos.especie,
           raza: datos.raza,
-          edad: datos.edad === '' ? null : Number(datos.edad),
+          fechaNacimiento: datos.fechaNacimiento || null,
           emailDuenio: datos.emailDuenio,
         },
       },
@@ -125,10 +128,13 @@ function FormularioPaciente({ duenios = [], paciente = null }) {
             </select>
           </Campo>
 
-          <Campo id="edad" label="Edad (años)" error={errores.edad}>
-            <input id="edad" name="edad" type="number" min="0" max="40"
-              value={datos.edad} onChange={handleChange}
-              aria-invalid={Boolean(errores.edad)} aria-describedby="edad-mensaje" />
+          <Campo id="fechaNacimiento" label="Fecha de nacimiento (opcional)" error={errores.fechaNacimiento}
+            ayuda={tieneSoloEdadVieja
+              ? `Antes se cargó la edad (${paciente.edadTexto}). Cargá la fecha para que se actualice sola.`
+              : 'Si no sabés el día exacto, poné uno aproximado. La edad se calcula sola.'}>
+            <input id="fechaNacimiento" name="fechaNacimiento" type="date" min="1985-01-01" max={hoy}
+              value={datos.fechaNacimiento} onChange={handleChange}
+              aria-invalid={Boolean(errores.fechaNacimiento)} aria-describedby="fechaNacimiento-mensaje" />
           </Campo>
         </div>
 

@@ -12,7 +12,7 @@ Los Route Handlers viven en `src/app/api/v1/`. Siguen los principios REST de la 
 | Método | URL | Quién | Qué hace | Datos que recibe |
 |---|---|---|---|---|
 | `GET` | `/api/v1/pacientes` | veterinaria | Lista los pacientes | query: `buscar`, `especie` (opcionales) |
-| `POST` | `/api/v1/pacientes` | veterinaria | Crea un paciente → `201` + `Location` | body JSON: `nombre`, `especie`, `raza`, `edad`, `emailDuenio` |
+| `POST` | `/api/v1/pacientes` | veterinaria | Crea un paciente → `201` + `Location` | body JSON: `nombre`, `especie`, `raza`, `fechaNacimiento` (`AAAA-MM-DD`), `emailDuenio` |
 | `GET` | `/api/v1/pacientes/:id` | veterinaria | Trae un paciente | route param: `id` |
 | `PATCH` | `/api/v1/pacientes/:id` | veterinaria | Modifica **solo** los campos que vienen | route param + body JSON (al menos un campo) |
 | `DELETE` | `/api/v1/pacientes/:id` | veterinaria | Lo elimina con su historial y los archivos de sus estudios | route param |
@@ -27,8 +27,8 @@ GET /api/v1/pacientes?buscar=luna&especie=Perro
 
 PATCH /api/v1/pacientes/1
 Content-Type: application/json
-{ "edad": 5 }
-→ 200 { "paciente": { "id": 1, "edad": 5, ... } }
+{ "fechaNacimiento": "2022-03-14" }
+→ 200 { "paciente": { "id": 1, "fechaNacimiento": "2022-03-14", "edad": "4 años", ... } }
 
 POST /api/v1/pacientes
 { "nombre": "", "especie": "Dragón", "emailDuenio": "no-es-email" }
@@ -63,8 +63,9 @@ POST /api/v1/pacientes
 pero cualquiera puede mandar un pedido directo a la API. Por eso **la API vuelve a validar todo** con esquemas de
 [Zod](https://zod.dev) en [`src/lib/esquemas.js`](../src/lib/esquemas.js):
 
-- **Tipo** (la edad tiene que ser un número entero, no un texto), **largo** (nombre de 1 a 40 caracteres),
-  **formato** (email válido) y **obligatoriedad** de cada campo.
+- **Tipo** y **formato** (fecha de nacimiento `AAAA-MM-DD` que exista, ni futura ni de hace más de 40 años; email válido),
+  **largo** (nombre de 1 a 40 caracteres) y **obligatoriedad** de cada campo.
+- La **edad no se guarda**: se calcula a partir de la fecha de nacimiento cada vez que se muestra, así se actualiza sola.
 - **Campos de más se rechazan** (`z.strictObject`): no se puede colar un `id` o un `rol`.
 - **Sanitización**: a los textos se les sacan etiquetas HTML (`<script>…`), caracteres de control y espacios de más.
   El email se pasa a minúsculas.

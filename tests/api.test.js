@@ -6,7 +6,7 @@ import {
 } from '../src/lib/esquemas.js'
 import { conManejoDeErrores, validarCon, ErrorDeApi, sinPermiso } from '../src/lib/api/errores.js'
 
-const PACIENTE = { nombre: 'Ramona', especie: 'Perro', raza: 'Mestiza', edad: 4, emailDuenio: 'valentina@mail.com' }
+const PACIENTE = { nombre: 'Ramona', especie: 'Perro', raza: 'Mestiza', fechaNacimiento: '2022-03-14', emailDuenio: 'valentina@mail.com' }
 
 // ---------- Sanitización ----------
 
@@ -25,21 +25,22 @@ test('esquema de paciente nuevo: acepta datos válidos y los normaliza', () => {
 })
 
 test('esquema de paciente nuevo: rechaza campos vacíos, de más o con tipo incorrecto', () => {
-  const r = esquemaNuevoPaciente.safeParse({ nombre: '<b></b>', especie: 'Dragón', edad: 4.5, emailDuenio: 'no-es-email' })
+  const r = esquemaNuevoPaciente.safeParse({ nombre: '<b></b>', especie: 'Dragón', fechaNacimiento: '2099-01-01', emailDuenio: 'no-es-email' })
   assert.equal(r.success, false)
   const campos = r.error.issues.map((i) => i.path[0])
-  for (const campo of ['nombre', 'especie', 'edad', 'emailDuenio']) assert.ok(campos.includes(campo), campo)
+  for (const campo of ['nombre', 'especie', 'fechaNacimiento', 'emailDuenio']) assert.ok(campos.includes(campo), campo)
 
   // Un campo que no existe (ej: intentar mandar el id o el rol) se rechaza
   assert.equal(esquemaNuevoPaciente.safeParse({ ...PACIENTE, rol: 'veterinaria' }).success, false)
-  // La edad tiene que ser número, no texto
-  assert.equal(esquemaNuevoPaciente.safeParse({ ...PACIENTE, edad: '4' }).success, false)
+  // Ya no se acepta la edad suelta (ahora es la fecha de nacimiento), ni una fecha con otro formato
+  assert.equal(esquemaNuevoPaciente.safeParse({ ...PACIENTE, edad: 4 }).success, false)
+  assert.equal(esquemaNuevoPaciente.safeParse({ ...PACIENTE, fechaNacimiento: '14/03/2022' }).success, false)
 })
 
 test('esquema de cambios (PATCH): cada campo es opcional, pero tiene que haber al menos uno', () => {
-  assert.deepEqual(esquemaCambiosPaciente.parse({ edad: 5 }), { edad: 5 })
+  assert.deepEqual(esquemaCambiosPaciente.parse({ fechaNacimiento: '2021-05-10' }), { fechaNacimiento: '2021-05-10' })
   assert.equal(esquemaCambiosPaciente.safeParse({}).success, false)
-  assert.equal(esquemaCambiosPaciente.safeParse({ edad: 99 }).success, false)
+  assert.equal(esquemaCambiosPaciente.safeParse({ fechaNacimiento: '1970-01-01' }).success, false)
 })
 
 test('filtros (query params) e id de la URL', () => {
@@ -50,7 +51,10 @@ test('filtros (query params) e id de la URL', () => {
 })
 
 test('aFilaDeMascota pasa a nombres de columna y solo incluye lo que vino', () => {
-  assert.deepEqual(aFilaDeMascota({ emailDuenio: 'a@b.com', edad: null }), { email_duenio: 'a@b.com', edad: null })
+  assert.deepEqual(aFilaDeMascota({ emailDuenio: 'a@b.com' }), { email_duenio: 'a@b.com' })
+  // Al cargar la fecha de nacimiento se borra la edad vieja; si se borra la fecha, la edad vieja queda
+  assert.deepEqual(aFilaDeMascota({ fechaNacimiento: '2021-05-10' }), { fecha_nacimiento: '2021-05-10', edad: null })
+  assert.deepEqual(aFilaDeMascota({ fechaNacimiento: null }), { fecha_nacimiento: null })
 })
 
 // ---------- Manejo de errores centralizado ----------

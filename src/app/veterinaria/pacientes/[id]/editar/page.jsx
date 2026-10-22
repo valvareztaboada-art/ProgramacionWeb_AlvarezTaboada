@@ -5,6 +5,7 @@ import FormularioPaciente from '@/components/FormularioPaciente'
 import BotonEliminarPaciente from '@/components/BotonEliminarPaciente'
 import { obtenerMascota, obtenerDuenios, obtenerResumenParaEliminar } from '@/lib/datos'
 import { puedeEliminarse, loQueSeBorra } from '@/lib/pacientes'
+import { hoyISO } from '@/lib/horarios'
 
 export async function generateMetadata({ params }) {
   const { id } = await params
@@ -27,7 +28,7 @@ export default async function EditarPaciente({ params }) {
       <PageHeader titulo={`Editar a ${mascota.nombre}`} descripcion="Corregí lo que se haya cargado mal." />
 
       <div className="card form-card">
-        <FormularioPaciente duenios={duenios} paciente={mascota} />
+        <FormularioPaciente duenios={duenios} paciente={mascota} hoy={hoyISO()} />
       </div>
 
       <section className="card form-card zona-peligro" aria-labelledby="titulo-eliminar">
