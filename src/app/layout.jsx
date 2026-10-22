@@ -1,4 +1,5 @@
 import { Bricolage_Grotesque, Figtree } from 'next/font/google'
+import { SpeedInsights } from '@vercel/speed-insights/next'
 import './globals.css'
 
 // next/font descarga las tipografías en el build y las sirve desde nuestro dominio.
@@ -26,7 +27,13 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="es" className={`${bricolage.variable} ${figtree.variable}`}>
-      <body>{children}</body>
+      <body>
+        {children}
+        {/* Observabilidad (RUM): mide las Core Web Vitals (LCP, INP, CLS) en los dispositivos
+            de las personas reales y las muestra en Vercel → Speed Insights.
+            No usa cookies ni guarda datos personales. En local no manda nada. */}
+        <SpeedInsights />
+      </body>
     </html>
   )
 }

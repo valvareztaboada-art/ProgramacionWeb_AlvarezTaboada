@@ -82,8 +82,8 @@ Dos roles, guardados en `perfiles.rol`. **Nadie elige su rol**: todos se registr
 | `/`, `/login`, `/registro` | Todos | — | — |
 | `/cliente/**` | `cliente` | El proxy redirige a `/login` | Página **403** (`forbidden()`) |
 | `/veterinaria/**` | `veterinaria` | El proxy redirige a `/login` | Página **403** (`forbidden()`) |
-| `POST /api/pagos/:id/preferencia` | `cliente` (sus cobros) | `401` JSON | `403` JSON |
-| `POST /api/webhooks/mercadopago` | Mercado Pago (firma HMAC) | `401` si la firma no es válida | — |
+| `POST /api/v1/pagos/:id/preferencia` | `cliente` (sus cobros) | `401` JSON | `403` JSON |
+| `POST /api/v1/webhooks/mercadopago` | Mercado Pago (firma HMAC) | `401` si la firma no es válida | — |
 | `/auth/confirmar` | Quien tiene el enlace del email | Lo valida Supabase | — |
 
 En las páginas, el "401" se muestra como una **redirección al login**, porque es lo útil para quien navega. En la API se responde el código tal cual.

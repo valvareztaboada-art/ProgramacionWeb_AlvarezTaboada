@@ -158,16 +158,10 @@ export async function obtenerResumenParaEliminar(mascotaId) {
   const [turnos, vacunas, estudios, pagos] = await Promise.all([
     contar('turnos'),
     contar('vacunas'),
-    revisar(await supabase.from('estudios').select('archivo_path').eq('mascota_id', mascotaId)),
-    revisar(await supabase.from('pagos').select('estado').eq('mascota_id', mascotaId)),
+    contar('estudios'),
+    supabase.from('pagos').select('estado').eq('mascota_id', mascotaId).then(revisar),
   ])
-  return {
-    turnos,
-    vacunas,
-    estudios: estudios.length,
-    archivos: estudios.map((e) => e.archivo_path).filter(Boolean),
-    pagos: pagos.map((p) => p.estado),
-  }
+  return { turnos, vacunas, estudios, pagos: pagos.map((p) => p.estado) }
 }
 
 export async function obtenerPagos() {

@@ -17,7 +17,7 @@ function BotonPagar({ pagoId, monto }) {
     setError('')
 
     try {
-      const respuesta = await fetch(`/api/pagos/${pagoId}/preferencia`, { method: 'POST' })
+      const respuesta = await fetch(`/api/v1/pagos/${pagoId}/preferencia`, { method: 'POST' })
       const datos = await respuesta.json().catch(() => ({}))
 
       if (!respuesta.ok || !datos.url) {

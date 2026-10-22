@@ -4,7 +4,7 @@
 
 ```
 Cliente toca "Pagar"
-   │  fetch POST /api/pagos/:id/preferencia        (Route Handler, con la sesión del cliente)
+   │  fetch POST /api/v1/pagos/:id/preferencia        (Route Handler, con la sesión del cliente)
    ▼
 Servidor ── busca el cobro con RLS (solo los suyos) y verifica que esté "pendiente"
    │  POST api.mercadopago.com/checkout/preferences  (Access Token, solo en el servidor)
@@ -14,7 +14,7 @@ Checkout Pro de Mercado Pago  ── el cliente paga fuera de nuestro sitio (PCI
    │                                   │
    │ back_urls (navegador)             │ WEBHOOK (servidor a servidor)
    ▼                                   ▼
-/cliente/pagos/resultado        POST /api/webhooks/mercadopago
+/cliente/pagos/resultado        POST /api/v1/webhooks/mercadopago
  solo MUESTRA un mensaje          1. valida la firma x-signature (HMAC-SHA256 + Webhook Secret) → 401 si no
  y espera la confirmación         2. GET /v1/payments/:id  (no confía en el cuerpo del webhook)
                                   3. registrar_pago_mp() en Supabase: atómica, idempotente,
