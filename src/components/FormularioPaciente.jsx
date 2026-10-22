@@ -1,8 +1,9 @@
 'use client'
 
 // Client Component: usa el hook useFormulario y eventos (onChange, onSubmit).
-// Sirve para cargar un paciente nuevo (INSERT) o, si recibe "paciente", para corregir
-// sus datos (UPDATE). Solo funciona para la veterinaria: el RLS rechaza a cualquier otro usuario.
+// Sirve para cargar un paciente nuevo o, si recibe "paciente", para corregir sus datos.
+// Los manda con fetch a nuestra API REST (POST /api/v1/pacientes o PATCH /api/v1/pacientes/:id),
+// que vuelve a validar en el servidor. Solo la veterinaria puede (403 para cualquier otro).
 
 import { useState } from 'react'
 import Link from 'next/link'
@@ -11,8 +12,7 @@ import Campo from './Campo'
 import SelectorDuenio from './SelectorDuenio'
 import { useFormulario } from '@/hooks/useFormulario'
 import { validarPaciente } from '@/lib/validaciones'
-import { crearClienteNavegador } from '@/lib/supabase/navegador'
-import { mensajeDeError } from '@/lib/supabase/mensajes'
+import { llamarApi } from '@/lib/api/cliente'
 
 const VACIO = { nombre: '', especie: '', raza: '', edad: '', emailDuenio: '' }
 
@@ -31,7 +31,7 @@ function datosDe(paciente) {
 // paciente: si viene, el formulario edita a ese paciente en lugar de crear uno nuevo
 function FormularioPaciente({ duenios = [], paciente = null }) {
   const editando = Boolean(paciente)
-  const { datos, errores, handleChange, cambiar, validarAlEnviar, reiniciar } =
+  const { datos, errores, handleChange, cambiar, validarAlEnviar, reiniciar, mostrarErroresDelServidor } =
     useFormulario(editando ? datosDe(paciente) : VACIO, validarPaciente)
   // Al editar, si cambia el email la mascota pasa a otra cuenta: lo avisamos
   const cambioDeDuenio = editando && datos.emailDuenio.trim().toLowerCase() !== paciente.emailDuenio
@@ -47,40 +47,35 @@ function FormularioPaciente({ duenios = [], paciente = null }) {
     if (!validarAlEnviar()) return
 
     setCargando(true)
-    try {
-      const fila = {
-        nombre: datos.nombre.trim(),
-        especie: datos.especie,
-        raza: datos.raza.trim() || null,
-        edad: datos.edad === '' ? null : Number(datos.edad),
-        email_duenio: datos.emailDuenio.trim().toLowerCase(),
-      }
-      const mascotas = crearClienteNavegador().from('mascotas')
+    // Nuevo → POST a la colección · Editar → PATCH al paciente (la API vuelve a validar todo)
+    const { ok, datos: respuesta } = await llamarApi(
+      editando ? `/api/v1/pacientes/${paciente.id}` : '/api/v1/pacientes',
+      {
+        metodo: editando ? 'PATCH' : 'POST',
+        cuerpo: {
+          nombre: datos.nombre,
+          especie: datos.especie,
+          raza: datos.raza,
+          edad: datos.edad === '' ? null : Number(datos.edad),
+          emailDuenio: datos.emailDuenio,
+        },
+      },
+    )
+    setCargando(false)
 
-      if (editando) {
-        // .select() devuelve las filas modificadas: si viene vacío, el RLS no lo dejó
-        const { data, error } = await mascotas.update(fila).eq('id', paciente.id).select('id')
-        if (error || data.length === 0) {
-          setErrorGeneral(mensajeDeError(error ?? { code: '42501' }))
-          return
-        }
-        router.push(`/veterinaria/pacientes/${paciente.id}?editado=1`)
-        router.refresh()
-        return
-      }
-
-      const { error } = await mascotas.insert(fila)
-      if (error) {
-        setErrorGeneral(mensajeDeError(error))
-        return
-      }
-      setEnviado(true)
-      router.refresh()
-    } catch (error) {
-      setErrorGeneral(mensajeDeError(error))
-    } finally {
-      setCargando(false)
+    if (!ok) {
+      // 400: la validación del servidor marca cada campo con su error
+      if (respuesta.detalles) mostrarErroresDelServidor(respuesta.detalles)
+      setErrorGeneral(respuesta.error)
+      return
     }
+    if (editando) {
+      router.push(`/veterinaria/pacientes/${paciente.id}?editado=1`)
+      router.refresh()
+      return
+    }
+    setEnviado(true)
+    router.refresh()
   }
 
   function cargarOtro() {

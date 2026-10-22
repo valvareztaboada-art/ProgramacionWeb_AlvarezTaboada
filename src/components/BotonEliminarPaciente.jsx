@@ -4,18 +4,17 @@
 // Usa <dialog> nativo con showModal(): bloquea el resto de la página, lleva el foco
 // adentro, se cierra con Escape y los lectores de pantalla lo anuncian como diálogo.
 //
-// Al borrar la mascota, la base borra en cascada sus turnos, vacunas, estudios y cobros
-// pendientes. Si tiene pagos registrados, la base lo rechaza (trigger) y mostramos el motivo.
-// Los archivos de los estudios están en Storage (no en la tabla): se borran después.
+// Confirmado, llama con fetch a DELETE /api/v1/pacientes/:id. El servidor borra la mascota
+// (la base borra en cascada sus turnos, vacunas, estudios y cobros pendientes) y los archivos
+// de sus estudios. Si tiene pagos registrados responde 409 y mostramos el motivo.
 
 import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { crearClienteNavegador } from '@/lib/supabase/navegador'
-import { mensajeDeError } from '@/lib/supabase/mensajes'
+import { llamarApi } from '@/lib/api/cliente'
 
-// mascota: { id, nombre } · seBorra: lista de textos ("2 turnos"...) · archivos: rutas en Storage
+// mascota: { id, nombre } · seBorra: lista de textos ("2 turnos"...)
 // bloqueo: si no se puede eliminar, el motivo (y el botón queda deshabilitado)
-function BotonEliminarPaciente({ mascota, seBorra, archivos, bloqueo }) {
+function BotonEliminarPaciente({ mascota, seBorra, bloqueo }) {
   const dialogo = useRef(null)
   const [eliminando, setEliminando] = useState(false)
   const [error, setError] = useState('')
@@ -33,24 +32,15 @@ function BotonEliminarPaciente({ mascota, seBorra, archivos, bloqueo }) {
   async function eliminar() {
     setEliminando(true)
     setError('')
-    try {
-      const supabase = crearClienteNavegador()
-      const { data, error } = await supabase.from('mascotas').delete().eq('id', mascota.id).select('id')
-      if (error || data.length === 0) {
-        setError(mensajeDeError(error ?? { code: '42501' }))
-        return
-      }
-      // La mascota ya no existe: borramos sus archivos (si falla, solo quedan archivos sueltos)
-      if (archivos.length > 0) await supabase.storage.from('estudios').remove(archivos)
-
-      dialogo.current?.close()
-      router.push(`/veterinaria/pacientes?eliminado=${encodeURIComponent(mascota.nombre)}`)
-      router.refresh()
-    } catch (error) {
-      setError(mensajeDeError(error))
-    } finally {
-      setEliminando(false)
+    const { ok, datos } = await llamarApi(`/api/v1/pacientes/${mascota.id}`, { metodo: 'DELETE' })
+    setEliminando(false)
+    if (!ok) {
+      setError(datos.error)
+      return
     }
+    dialogo.current?.close()
+    router.push(`/veterinaria/pacientes?eliminado=${encodeURIComponent(mascota.nombre)}`)
+    router.refresh()
   }
 
   return (

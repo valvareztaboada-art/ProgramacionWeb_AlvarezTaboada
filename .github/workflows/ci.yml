@@ -1,6 +1,13 @@
 # Integración continua (CI): se ejecuta en cada pull request y en cada push a main.
-# Si algún paso falla, GitHub marca el PR con una ❌ y no conviene hacer merge.
-# El deploy (CD) lo hace Vercel: preview por cada PR y producción al mergear a main.
+# Si algún paso falla, el pipeline se corta y GitHub marca el PR con una ❌.
+# Con la protección de la rama main (Settings → Rules) no se puede mergear hasta que pase.
+#
+# Despliegue continuo (CD): lo hace Vercel, conectado al repositorio.
+#   · cada PR → un deploy de prueba (Preview) con su propia URL
+#   · cada merge a main → producción
+# Vercel tiene las variables de entorno cifradas: este workflow no necesita ninguna clave.
+#
+# Eventos (on) → jobs (corren en una máquina virtual limpia) → steps (en orden)
 
 name: CI
 
@@ -9,10 +16,20 @@ on:
   push:
     branches: [main]
 
+# Mínimo permiso necesario: solo leer el código
+permissions:
+  contents: read
+
+# Si llega un push nuevo al mismo PR, se cancela la corrida anterior (ahorra minutos)
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   verificar:
     name: Lint, tests y build
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
       - name: Descargar el código
@@ -24,8 +41,14 @@ jobs:
           node-version: 22
           cache: npm
 
+      # npm ci: instalación limpia y reproducible, exactamente lo del package-lock.json
       - name: Instalar dependencias
         run: npm ci
+
+      # Validación de seguridad: falla si alguna dependencia de producción
+      # tiene una vulnerabilidad conocida de gravedad alta o crítica
+      - name: Revisar dependencias (npm audit)
+        run: npm audit --omit=dev --audit-level=high
 
       - name: Revisar el código (lint)
         run: npm run lint

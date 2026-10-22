@@ -11,14 +11,17 @@ Tiene **doble interfaz**:
 | Veterinaria | `/veterinaria` | Panel, pacientes, agenda, estudios, cobros |
 
 ## Identidad visual
-- **Paleta:** crema `#fbf3e6`, azul cobalto `#2f45c4`, mostaza `#f2a531`, durazno `#f7d6ab`, celeste `#d6ebf5`, azul marino `#16306e` (panel de la veterinaria).
-- **Tipografías:** Fredoka (títulos) y Nunito (textos), de Google Fonts.
-- **Ilustraciones:** perros y gatos dibujados en SVG (`src/components/ilustraciones`), en estilo de línea a mano alzada.
+- **Paleta:** Forrest `#44724f` (principal y panel del cliente), Ocean `#4b8299` (panel de la veterinaria), Skyline `#99bfdf`, Tangerine `#e99e26`, Toffee `#da682f` y Salsa `#db3100`, sobre crema `#f6f0e6`.
+- **Tipografías:** Bricolage Grotesque (títulos) y Figtree (textos), de Google Fonts con `next/font`.
+- **Portada:** fotos con licencia libre (Unsplash / Pexels) optimizadas con `next/image`. Los paneles son simples, sin animaciones.
 
 ## Tecnologías
 - **Next.js** (App Router) + React
-- **Supabase**: base de datos Postgres, autenticación y RLS
+- **Supabase**: base de datos Postgres, autenticación, RLS y Storage
+- **API REST** versionada (`/api/v1`) con validación **Zod** y manejo de errores centralizado
+- **Mercado Pago** Checkout Pro + webhooks
 - CSS puro (variables, flexbox, grid, animaciones, responsive)
+- **Vercel** (deploy + Speed Insights) y **GitHub Actions** (CI)
 
 ## Cómo está organizado (App Router)
 ```
@@ -36,21 +39,26 @@ src/
 │   │   └── mascotas/[id]/  # Ruta dinámica: ficha de cada mascota
 │   └── veterinaria/        # Interfaz de la veterinaria
 │       └── pacientes/[id]/ # Ruta dinámica: ficha de cada paciente
+│   └── api/v1/             # API REST (Route Handlers): pacientes, pagos, webhooks
 ├── components/             # Componentes reutilizables
 ├── lib/datos.js            # Funciones async que leen de Supabase (Server Components)
+├── lib/esquemas.js         # Esquemas Zod: validación y sanitización en el servidor
+├── lib/api/                # Errores centralizados, logs estructurados, sesión y rol
 ├── lib/supabase/           # Clientes de Supabase (servidor y navegador)
 ├── proxy.js                # Renueva la sesión y protege /cliente y /veterinaria
 ```
 
 ### Server y Client Components
 Todas las páginas y layouts son **Server Components**: buscan los datos con `async/await`.
-Solo tres componentes chicos (hojas del árbol) llevan `'use client'`, porque necesitan hooks o eventos:
+Solo los componentes chicos que necesitan hooks o eventos (hojas del árbol) llevan `'use client'`. Algunos ejemplos:
 
 | Componente | Por qué es Client Component |
 |---|---|
 | `EnlaceNav` | Usa `usePathname` para marcar el enlace activo del menú |
-| `FormularioLogin` | Usa `useState`, `onSubmit` y `useRouter` |
+| `FormularioLogin`, `FormularioPaciente`, `FormularioTurno`… | `useState`, `onSubmit`, `fetch` a la API y `useRouter` |
 | `TablaPacientes` | Buscador con `useState` y `onChange` |
+| `BotonEliminarPaciente` | Ventana de confirmación (`<dialog>`) y `fetch` con `DELETE` |
+| `CaminosCuenta`, `CarruselOpiniones` | Pestañas y carrusel de la portada (`useState`) |
 
 ## Correr en local
 ```bash
@@ -66,10 +74,14 @@ npm run dev
 | `npm run build` | Compila la versión de producción |
 | `npx supabase <comando>` | CLI de Supabase (instalado como dependencia del proyecto) |
 
-## CI/CD
-- **CI (GitHub Actions):** en cada pull request y en cada push a `main` se ejecutan lint, tests y build ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)).
+## API REST
+Endpoints, códigos de estado, validación con Zod y manejo de errores: ver [docs/api.md](docs/api.md).
+
+## CI/CD, entornos y observabilidad
+- **CI (GitHub Actions):** en cada pull request y en cada push a `main` se ejecutan `npm audit`, lint, tests y build ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)).
 - **CD (Vercel):** cada pull request genera un **deploy de preview** con su propia URL, y al mergear a `main` se publica en producción.
 - **Flujo de trabajo:** cada cambio se hace en una rama → pull request → CI en verde + revisar la preview → merge.
+- Entornos, variables, dominio/HTTPS, logs y Speed Insights: ver [docs/despliegue.md](docs/despliegue.md).
 
 ## Accesibilidad y responsive
 - HTML semántico: `header`, `nav` (con `aria-label`), `main`, `section`, `article`, `footer`, `ol`, `dl`, `address`, tablas con `thead`/`th`.
@@ -130,5 +142,7 @@ Autenticación, contraseñas (bcrypt con salt), sesiones, RBAC y códigos 401/40
 - [x] Base de datos con Supabase
 - [x] Login real y roles (dueño / veterinaria)
 - [x] Pagos con Mercado Pago (Checkout Pro + webhooks firmados) — ver [docs/pruebas-mercado-pago.md](docs/pruebas-mercado-pago.md)
+- [x] API REST versionada con validación Zod y errores centralizados
+- [x] Observabilidad: logs estructurados y Speed Insights
 - [ ] Tests con Playwright
 - [x] CI/CD con GitHub Actions

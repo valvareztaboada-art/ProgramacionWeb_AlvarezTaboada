@@ -38,7 +38,6 @@ export default async function EditarPaciente({ params }) {
         <BotonEliminarPaciente
           mascota={{ id: mascota.id, nombre: mascota.nombre }}
           seBorra={loQueSeBorra(resumen)}
-          archivos={resumen.archivos}
           bloqueo={puedeEliminarse(resumen.pagos)
             ? null
             : `No se puede eliminar: tiene pagos registrados, que se guardan como comprobante.`}
