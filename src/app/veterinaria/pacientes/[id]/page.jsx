@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 import FichaMascota from '@/components/FichaMascota'
-import { obtenerMascota, obtenerTurnos, obtenerVacunas, obtenerEstudios } from '@/lib/datos'
+import { obtenerMascota, obtenerTurnos, obtenerVacunas, obtenerEstudios, obtenerMontosSugeridos } from '@/lib/datos'
 
 // Ruta dinámica: cada paciente tiene su propia página. Ej: /veterinaria/pacientes/3
 export async function generateMetadata({ params }) {
@@ -16,10 +16,11 @@ export default async function FichaPaciente({ params, searchParams }) {
 
   if (!mascota) notFound()
 
-  const [turnos, vacunas, estudios] = await Promise.all([
+  const [turnos, vacunas, estudios, montos] = await Promise.all([
     obtenerTurnos({ mascotaId: mascota.id }),
     obtenerVacunas({ mascotaId: mascota.id }),
     obtenerEstudios({ mascotaId: mascota.id }),
+    obtenerMontosSugeridos(),
   ])
 
   return (
@@ -30,6 +31,7 @@ export default async function FichaPaciente({ params, searchParams }) {
       estudios={estudios}
       volver={{ href: '/veterinaria/pacientes', label: 'Pacientes' }}
       esVeterinaria
+      montos={montos}
       aviso={editado ? 'Listo, los datos quedaron guardados.' : null}
     />
   )

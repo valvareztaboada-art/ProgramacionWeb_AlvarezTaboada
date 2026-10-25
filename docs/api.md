@@ -16,6 +16,9 @@ Los Route Handlers viven en `src/app/api/v1/`. Siguen los principios REST de la 
 | `GET` | `/api/v1/pacientes/:id` | veterinaria | Trae un paciente | route param: `id` |
 | `PATCH` | `/api/v1/pacientes/:id` | veterinaria | Modifica **solo** los campos que vienen | route param + body JSON (al menos un campo) |
 | `DELETE` | `/api/v1/pacientes/:id` | veterinaria | Lo elimina con su historial y los archivos de sus estudios | route param |
+| `POST` | `/api/v1/cobros` | veterinaria | Crea un cobro → `201`. Si viene `turnoId`, sale de ese turno atendido; con `enEfectivo: true` queda pagado | body JSON: `mascotaId`, `concepto`, `monto`, `turnoId?`, `enEfectivo?` |
+| `PATCH` | `/api/v1/turnos/:id` | veterinaria | Cambia el estado del turno o lo marca "no se cobra" | body JSON: `estado?`, `sinCargo?` |
+| `DELETE` | `/api/v1/vacunas/:id` | veterinaria | Elimina una dosis cargada por error | route param |
 | `POST` | `/api/v1/pagos/:id/preferencia` | cliente (sus cobros) | Crea la preferencia de Mercado Pago → `201` + `{ url }` | route param |
 | `POST` | `/api/v1/webhooks/mercadopago` | Mercado Pago (firma HMAC) | Recibe los avisos de pago | body/query de Mercado Pago |
 
@@ -96,6 +99,10 @@ Los Client Components llaman a la API con `fetch` (helper [`src/lib/api/cliente.
   Si la API responde `400`, cada error aparece debajo de su campo.
 - `BotonEliminarPaciente` → `DELETE /api/v1/pacientes/:id` (después de confirmar).
 - `BotonPagar` → `POST /api/v1/pagos/:id/preferencia`.
+- `AccionesTurno` → `PATCH /api/v1/turnos/:id`. Al marcar "Atendido" se abre la ventana de cobro
+  (`DialogoCobrarTurno`), que usa `POST /api/v1/cobros` o, con "No se cobra", `PATCH` con `sinCargo`.
+- `FormularioCobro` → `POST /api/v1/cobros` (también desde la página de Cobros, para cobros sueltos).
+- `BotonEliminar` (genérico, con confirmación) → `DELETE /api/v1/vacunas/:id`.
 
 > La dirección vieja del webhook (`/api/webhooks/mercadopago`, sin versión) sigue funcionando como alias
 > mientras se actualiza la URL en el panel de Mercado Pago.

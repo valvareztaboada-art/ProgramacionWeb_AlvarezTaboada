@@ -5,6 +5,9 @@
 // la página en el servidor y llegan por props.
 // Al confirmar, inserta el turno en Supabase. La base de datos vuelve a controlar
 // todo (que la mascota sea suya, el horario de atención, que no esté ocupado).
+//
+// paraVeterinaria: lo usa la veterinaria para agendar un turno (ej: alguien llamó por teléfono).
+// Elige entre TODOS los pacientes y el turno queda confirmado directamente.
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
@@ -20,10 +23,10 @@ import { mensajeDeError, SESION_VENCIDA } from '@/lib/supabase/mensajes'
 
 const MAXIMO_COMENTARIO = 300
 
-function FormularioTurno({ mascotas, especialidades, ocupados }) {
-  // Si tiene una sola mascota, ya viene elegida
+function FormularioTurno({ mascotas, especialidades, ocupados, paraVeterinaria = false, mascotaInicial = '' }) {
+  // Si tiene una sola mascota (o viene elegida desde la ficha del paciente), ya está seleccionada
   const vacio = {
-    mascotaId: mascotas.length === 1 ? String(mascotas[0].id) : '',
+    mascotaId: mascotaInicial || (mascotas.length === 1 ? String(mascotas[0].id) : ''),
     especialidad: '',
     fecha: '',
     hora: '',
@@ -80,6 +83,8 @@ function FormularioTurno({ mascotas, especialidades, ocupados }) {
         hora: datos.hora,
         motivo: datos.comentario.trim() || null,
         creado_por: user.id,
+        // Si lo agenda la veterinaria, no hace falta que después lo confirme
+        ...(paraVeterinaria && { estado: 'confirmado' }),
       })
 
       if (error) {
@@ -109,18 +114,24 @@ function FormularioTurno({ mascotas, especialidades, ocupados }) {
   if (enviado) {
     return (
       <div className="form-exito" role="status">
-        <h2>¡Turno solicitado!</h2>
+        <h2>{paraVeterinaria ? '¡Turno agendado!' : '¡Turno solicitado!'}</h2>
         <p>
           <strong>{mascotaElegida.nombre}</strong> · {especialidadElegida.nombre}
           <br />
           {formatearFecha(datos.fecha)} a las {datos.hora} h
         </p>
         <p className="texto-suave">
-          Queda <strong>pendiente</strong> hasta que la veterinaria lo confirme.
+          {paraVeterinaria
+            ? <>Quedó <strong>confirmado</strong>. {mascotaElegida.duenio} lo ve en su cuenta (si ya la creó).</>
+            : <>Queda <strong>pendiente</strong> hasta que la veterinaria lo confirme.</>}
         </p>
         <div className="form-exito-botones">
-          <Link href="/cliente/turnos" className="btn btn-primario">Ver mis turnos</Link>
-          <button type="button" className="btn btn-secundario" onClick={pedirOtro}>Pedir otro turno</button>
+          <Link href={paraVeterinaria ? '/veterinaria/agenda' : '/cliente/turnos'} className="btn btn-primario">
+            {paraVeterinaria ? 'Ver la agenda' : 'Ver mis turnos'}
+          </Link>
+          <button type="button" className="btn btn-secundario" onClick={pedirOtro}>
+            {paraVeterinaria ? 'Agendar otro turno' : 'Pedir otro turno'}
+          </button>
         </div>
       </div>
     )
@@ -131,17 +142,33 @@ function FormularioTurno({ mascotas, especialidades, ocupados }) {
       {/* 1. Mascota */}
       <fieldset className="form-grupo">
         <legend>1. ¿Para quién es?</legend>
-        <div className="opciones" role="radiogroup">
-          {mascotas.map((m) => (
-            <label key={m.id} className={`opcion ${datos.mascotaId === String(m.id) ? 'activo' : ''}`}>
-              <input type="radio" name="mascotaId" value={String(m.id)}
-                checked={datos.mascotaId === String(m.id)} onChange={handleChange} />
-              <strong>{m.nombre}</strong>
-              <span className="texto-suave">{m.especie}</span>
-            </label>
-          ))}
-        </div>
-        {errores.mascotaId && <p className="campo-error">{errores.mascotaId}</p>}
+        {paraVeterinaria ? (
+          // Con muchos pacientes, una lista desplegable es más cómoda que tarjetas
+          <Campo id="mascotaId" label="Paciente" error={errores.mascotaId}
+            ayuda={mascotaElegida && `Dueño/a: ${mascotaElegida.duenio}`}>
+            <select id="mascotaId" name="mascotaId" value={datos.mascotaId} onChange={handleChange}
+              aria-invalid={Boolean(errores.mascotaId)} aria-describedby="mascotaId-mensaje">
+              <option value="">Elegí un paciente</option>
+              {mascotas.map((m) => (
+                <option key={m.id} value={String(m.id)}>{m.nombre} ({m.especie}) — {m.duenio}</option>
+              ))}
+            </select>
+          </Campo>
+        ) : (
+          <>
+            <div className="opciones" role="radiogroup">
+              {mascotas.map((m) => (
+                <label key={m.id} className={`opcion ${datos.mascotaId === String(m.id) ? 'activo' : ''}`}>
+                  <input type="radio" name="mascotaId" value={String(m.id)}
+                    checked={datos.mascotaId === String(m.id)} onChange={handleChange} />
+                  <strong>{m.nombre}</strong>
+                  <span className="texto-suave">{m.especie}</span>
+                </label>
+              ))}
+            </div>
+            {errores.mascotaId && <p className="campo-error">{errores.mascotaId}</p>}
+          </>
+        )}
       </fieldset>
 
       {/* 2. Especialidad */}
@@ -206,7 +233,7 @@ function FormularioTurno({ mascotas, especialidades, ocupados }) {
       {errorGeneral && <p className="form-error" role="alert">{errorGeneral}</p>}
 
       <button type="submit" className="btn btn-primario" disabled={cargando}>
-        {cargando ? 'Pidiendo turno…' : 'Pedir turno'}
+        {cargando ? 'Guardando…' : paraVeterinaria ? 'Agendar turno' : 'Pedir turno'}
       </button>
     </form>
   )

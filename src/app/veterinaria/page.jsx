@@ -3,7 +3,9 @@ import PageHeader from '@/components/PageHeader'
 import StatCard from '@/components/StatCard'
 import Badge from '@/components/Badge'
 import AccionesTurno from '@/components/AccionesTurno'
-import { obtenerUsuarioActual, obtenerMascotas, obtenerTurnos, obtenerEstudios, obtenerPagos, obtenerVacunas } from '@/lib/datos'
+import AtendidosSinCobrar from '@/components/AtendidosSinCobrar'
+import { obtenerUsuarioActual, obtenerMascotas, obtenerTurnos, obtenerEstudios, obtenerPagos, obtenerVacunas, obtenerMontosSugeridos } from '@/lib/datos'
+import { atendidosSinCobrar } from '@/lib/cobros'
 import { vacunasAVencer } from '@/lib/vacunas'
 import { hoyISO } from '@/lib/horarios'
 import { formatearFecha } from '@/lib/formato'
@@ -12,13 +14,14 @@ import { separarTurnos, turnosDeLaSemana } from '@/lib/turnos'
 export const metadata = { title: 'Panel' }
 
 export default async function VetInicio() {
-  const [usuario, mascotas, turnos, estudios, pagos, vacunas] = await Promise.all([
+  const [usuario, mascotas, turnos, estudios, pagos, vacunas, montos] = await Promise.all([
     obtenerUsuarioActual(),
     obtenerMascotas(),
     obtenerTurnos(),
     obtenerEstudios(),
     obtenerPagos(),
     obtenerVacunas(),
+    obtenerMontosSugeridos(),
   ])
 
   const { proximos } = separarTurnos(turnos)
@@ -26,6 +29,7 @@ export default async function VetInicio() {
   const cobrosPendientes = pagos.filter((p) => p.estado === 'pendiente')
   // Vacunas que vencen en 30 días o menos (o ya vencieron) y todavía no se avisaron
   const porAvisar = vacunasAVencer(vacunas, hoyISO())
+  const sinCobrar = atendidosSinCobrar(turnos, hoyISO())
 
   return (
     <>
@@ -52,13 +56,15 @@ export default async function VetInicio() {
               </div>
               <div className="lista-item-derecha">
                 <Badge estado={t.estado} />
-                <AccionesTurno turnoId={t.id} estado={t.estado} descripcion={`${t.mascota} del ${formatearFecha(t.fecha)}`} />
+                <AccionesTurno turno={t} montoSugerido={montos[t.especialidadId]} />
               </div>
             </li>
           ))}
         </ul>
         <Link href="/veterinaria/agenda" className="enlace">Ver la agenda completa →</Link>
       </section>
+
+      <AtendidosSinCobrar turnos={sinCobrar} montos={montos} />
 
       {porAvisar.length > 0 && (
         <p className="card aviso-panel">

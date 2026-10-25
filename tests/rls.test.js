@@ -439,3 +439,41 @@ test('fecha de nacimiento: un paciente viejo pasa de "edad" fija a fecha de naci
     returning fecha_nacimiento::text as fecha, edad`)
   assert.deepEqual(r.filas[0], { fecha: '2025-01-10', edad: null })
 })
+
+// ---------- Cobrar turnos atendidos ----------
+
+test('cobro de un turno: tiene que ser de la misma mascota del turno', async () => {
+  const luna = await idDe('Luna')
+  const rocco = await idDe('Rocco')
+  const turno = (await como(VET, `insert into turnos (mascota_id, especialidad_id, fecha, hora, estado)
+    values (${luna}, 'consulta', current_date - 1, '17:30', 'atendido') returning id`)).filas[0].id
+
+  const bien = await como(VET, `insert into pagos (mascota_id, concepto, monto, turno_id)
+    values (${luna}, 'Consulta · Luna', 18000, ${turno}) returning turno_id`)
+  assert.equal(Number(bien.filas[0].turno_id), Number(turno))
+
+  const mal = await como(VET, `insert into pagos (mascota_id, concepto, monto, turno_id)
+    values (${rocco}, 'Consulta · Rocco', 18000, ${turno})`)
+  assert.match(mal.error, /no es de la misma mascota/)
+})
+
+test('cobro de un turno: el cliente no puede crear cobros; si se borra el turno, el cobro queda', async () => {
+  const luna = await idDe('Luna')
+  const cliente = await como(ANA, `insert into pagos (mascota_id, concepto, monto) values (${luna}, 'Trucho', 1)`)
+  assert.ok(cliente.error)
+
+  const turno = (await como(VET, `insert into turnos (mascota_id, especialidad_id, fecha, hora, estado)
+    values (${luna}, 'peluqueria', current_date - 2, '17:00', 'atendido') returning id`)).filas[0].id
+  const pago = (await como(VET, `insert into pagos (mascota_id, concepto, monto, turno_id)
+    values (${luna}, 'Peluquería · Luna', 25000, ${turno}) returning id`)).filas[0].id
+  await db.query(`delete from turnos where id = ${turno}`)
+  const queda = await como(VET, `select turno_id from pagos where id = ${pago}`)
+  assert.equal(queda.filas[0].turno_id, null)
+})
+
+test('turno "no se cobra": la veterinaria lo marca; el cliente no puede', async () => {
+  const vet = await como(VET, `update turnos set sin_cargo = true where estado = 'atendido' returning sin_cargo`)
+  assert.ok(vet.filas.length > 0 && vet.filas.every((f) => f.sin_cargo))
+  const cliente = await como(ANA, `update turnos set sin_cargo = false returning id`)
+  assert.equal(cliente.filas.length, 0)
+})
