@@ -3,13 +3,13 @@ import PageHeader from '@/components/PageHeader'
 import Badge from '@/components/Badge'
 import AccionesTurno from '@/components/AccionesTurno'
 import MostrarMas from '@/components/MostrarMas'
-import { obtenerTurnos } from '@/lib/datos'
+import { obtenerTurnos, obtenerMontosSugeridos } from '@/lib/datos'
 import { formatearFecha } from '@/lib/formato'
 import { separarTurnos } from '@/lib/turnos'
 
 export const metadata = { title: 'Agenda' }
 
-function TablaTurnos({ turnos, conAcciones }) {
+function TablaTurnos({ turnos, conAcciones, montos = {} }) {
   return (
     <div className="tabla-contenedor">
       <table className="tabla">
@@ -36,7 +36,7 @@ function TablaTurnos({ turnos, conAcciones }) {
               <td>{t.motivo ?? '—'}</td>
               <td><Badge estado={t.estado} /></td>
               {conAcciones && (
-                <td><AccionesTurno turnoId={t.id} estado={t.estado} descripcion={`${t.mascota} del ${formatearFecha(t.fecha)}`} /></td>
+                <td><AccionesTurno turno={t} montoSugerido={montos[t.especialidadId]} /></td>
               )}
             </tr>
           ))}
@@ -47,7 +47,7 @@ function TablaTurnos({ turnos, conAcciones }) {
 }
 
 export default async function Agenda() {
-  const turnos = await obtenerTurnos()
+  const [turnos, montos] = await Promise.all([obtenerTurnos(), obtenerMontosSugeridos()])
   const { proximos, historial } = separarTurnos(turnos)
   // Turnos que ya pasaron pero siguen activos: hay que marcarlos como atendido o ausente
   const sinCerrar = historial.filter((t) => t.estado === 'pendiente' || t.estado === 'confirmado')
@@ -55,13 +55,15 @@ export default async function Agenda() {
 
   return (
     <>
-      <PageHeader titulo="Agenda" descripcion="Confirmá, cancelá o marcá la asistencia de cada turno." />
+      <PageHeader titulo="Agenda" descripcion="Confirmá, cancelá o marcá la asistencia de cada turno.">
+        <Link href="/veterinaria/agenda/nuevo" className="btn btn-primario">+ Agendar turno</Link>
+      </PageHeader>
 
       {sinCerrar.length > 0 && (
         <section className="seccion-panel" aria-labelledby="titulo-sin-cerrar">
           <h2 id="titulo-sin-cerrar">Para cerrar ({sinCerrar.length})</h2>
           <p className="texto-suave">Turnos que ya pasaron: marcá si el paciente vino o no.</p>
-          <TablaTurnos turnos={sinCerrar} conAcciones />
+          <TablaTurnos turnos={sinCerrar} conAcciones montos={montos} />
         </section>
       )}
 
@@ -69,7 +71,7 @@ export default async function Agenda() {
         <h2 id="titulo-proximos">Próximos turnos</h2>
         {proximos.length === 0
           ? <p className="texto-suave">No hay turnos próximos.</p>
-          : <TablaTurnos turnos={proximos} conAcciones />}
+          : <TablaTurnos turnos={proximos} conAcciones montos={montos} />}
       </section>
 
       <section className="seccion-panel" aria-labelledby="titulo-historial">

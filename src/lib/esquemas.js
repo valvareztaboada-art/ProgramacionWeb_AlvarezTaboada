@@ -97,3 +97,31 @@ export function aFilaDeMascota(datos) {
   if ('emailDuenio' in datos) fila.email_duenio = datos.emailDuenio
   return fila
 }
+
+// ---------- Cobros ----------
+
+// POST /api/v1/cobros → un cobro nuevo. turnoId (opcional): de qué turno sale.
+// enEfectivo: si ya lo pagó en el mostrador, queda pagado en el mismo paso.
+export const esquemaNuevoCobro = z.strictObject({
+  mascotaId: z.number({ error: 'Elegí el paciente.' }).int().positive('Elegí el paciente.'),
+  concepto: textoLimpio.pipe(z.string()
+    .min(3, 'Escribí el concepto (ej: Consulta de control).')
+    .max(80, 'El concepto puede tener hasta 80 caracteres.')),
+  monto: z.number({ error: 'Ingresá el monto.' })
+    .positive('El monto tiene que ser mayor a 0.')
+    .max(10000000, 'El monto es demasiado alto.')
+    // Centavos enteros (con un margen por cómo se guardan los decimales en JavaScript)
+    .refine((m) => Math.abs(m * 100 - Math.round(m * 100)) < 1e-6, 'Usá hasta 2 decimales (ej: 15000 o 15000,50).'),
+  turnoId: z.number().int().positive().nullish(),
+  enEfectivo: z.boolean().optional(),
+})
+
+// ---------- Turnos ----------
+
+export const ESTADOS_DE_TURNO_VETERINARIA = ['confirmado', 'atendido', 'ausente', 'cancelado']
+
+// PATCH /api/v1/turnos/:id → cambiar el estado y/o marcar que no se cobra
+export const esquemaCambiosTurno = z.strictObject({
+  estado: z.enum(ESTADOS_DE_TURNO_VETERINARIA, { error: 'Ese estado no existe.' }).optional(),
+  sinCargo: z.boolean().optional(),
+}).refine((cambios) => Object.keys(cambios).length > 0, { message: 'No hay cambios para guardar.' })

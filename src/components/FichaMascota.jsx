@@ -13,7 +13,8 @@ import { IlustracionMascota } from './ilustraciones/Ilustraciones'
 // Ficha completa de una mascota. La usan las dos interfaces:
 // /cliente/mascotas/[id] y /veterinaria/pacientes/[id]
 // Si la ve la veterinaria (esVeterinaria), cada turno activo muestra sus acciones.
-function FichaMascota({ mascota, turnos, vacunas, estudios, volver, esVeterinaria = false, aviso = null }) {
+// montos: (solo veterinaria) último monto cobrado por tipo de turno, para sugerirlo al cobrar
+function FichaMascota({ mascota, turnos, vacunas, estudios, volver, esVeterinaria = false, aviso = null, montos = {} }) {
   const detalle = [mascota.especie, mascota.raza, mascota.edadTexto].filter(Boolean).join(' · ')
   // Los turnos más nuevos primero
   const turnosOrdenados = [...turnos].reverse()
@@ -46,7 +47,14 @@ function FichaMascota({ mascota, turnos, vacunas, estudios, volver, esVeterinari
 
       <div className="grid-ficha">
         <section>
-          <h2>Turnos</h2>
+          <div className="ficha-seccion-encabezado">
+            <h2>Turnos</h2>
+            {esVeterinaria && (
+              <Link href={`/veterinaria/agenda/nuevo?mascota=${mascota.id}`} className="btn btn-chico btn-primario">
+                + Agendar turno
+              </Link>
+            )}
+          </div>
           <MostrarMas total={turnosOrdenados.length} que="turnos anteriores">
           <ul className="lista">
             {turnosOrdenados.map((t) => (
@@ -58,7 +66,7 @@ function FichaMascota({ mascota, turnos, vacunas, estudios, volver, esVeterinari
                 <div className="lista-item-derecha">
                   <Badge estado={t.estado} />
                   {esVeterinaria && (
-                    <AccionesTurno turnoId={t.id} estado={t.estado} descripcion={`${mascota.nombre} del ${formatearFecha(t.fecha)}`} />
+                    <AccionesTurno turno={t} montoSugerido={montos[t.especialidadId]} />
                   )}
                 </div>
               </li>
@@ -80,7 +88,7 @@ function FichaMascota({ mascota, turnos, vacunas, estudios, volver, esVeterinari
           <ProximasVacunas proximas={proximasVacunas(vacunas, hoyISO())} mostrarMascota={false}
             vacio="No tiene vacunas programadas." />
           <h3 className="subtitulo-ficha">Historial</h3>
-          <HistorialVacunas vacunas={vacunas} />
+          <HistorialVacunas vacunas={vacunas} esVeterinaria={esVeterinaria} />
         </section>
 
         <section>

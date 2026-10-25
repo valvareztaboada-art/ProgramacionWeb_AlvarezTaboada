@@ -2,7 +2,10 @@ import Link from 'next/link'
 import PageHeader from '@/components/PageHeader'
 import Badge from '@/components/Badge'
 import BotonPagoEfectivo from '@/components/BotonPagoEfectivo'
-import { obtenerPagos, obtenerEventosDePago } from '@/lib/datos'
+import AtendidosSinCobrar from '@/components/AtendidosSinCobrar'
+import { obtenerPagos, obtenerEventosDePago, obtenerTurnos, obtenerMontosSugeridos } from '@/lib/datos'
+import { atendidosSinCobrar } from '@/lib/cobros'
+import { hoyISO } from '@/lib/horarios'
 import { conciliarCobros } from '@/lib/mercadopago/conciliar'
 import MostrarMas from '@/components/MostrarMas'
 
@@ -19,7 +22,9 @@ const MEDIOS = { mercado_pago: 'Mercado Pago', efectivo: 'Efectivo' }
 export default async function Cobros() {
   // Primero conciliamos con Mercado Pago (por si algún webhook no llegó) y después leemos
   await conciliarCobros(await obtenerPagos())
-  const [pagos, eventos] = await Promise.all([obtenerPagos(), obtenerEventosDePago()])
+  const [pagos, eventos, turnos, montos] = await Promise.all([
+    obtenerPagos(), obtenerEventosDePago(), obtenerTurnos(), obtenerMontosSugeridos(),
+  ])
   const totalPendiente = pagos
     .filter((p) => p.estado === 'pendiente' || p.estado === 'en_proceso')
     .reduce((total, p) => total + Number(p.monto), 0)
@@ -29,6 +34,8 @@ export default async function Cobros() {
       <PageHeader titulo="Cobros" descripcion={`Pendiente de cobro: ${pesos(totalPendiente)}`}>
         <Link href="/veterinaria/cobros/nuevo" className="btn btn-primario">+ Nuevo cobro</Link>
       </PageHeader>
+
+      <AtendidosSinCobrar turnos={atendidosSinCobrar(turnos, hoyISO())} montos={montos} />
 
       <MostrarMas total={pagos.length} que="cobros anteriores">
       <div className="tabla-contenedor">

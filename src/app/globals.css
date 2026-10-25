@@ -230,7 +230,7 @@ img { max-width: 100%; }
 .login-card h1 { text-align: center; margin-bottom: 1rem; }
 .form { display: flex; flex-direction: column; gap: 0.5rem; }
 .form label { font-weight: 700; }
-.form input:not([type='radio']),
+.form input:not([type='radio']):not([type='checkbox']),
 .form select,
 .form textarea {
   width: 100%;
@@ -780,3 +780,15 @@ summary:focus-visible {
 @media (prefers-reduced-motion: no-preference) {
   .dialogo[open] { animation: desplegar 0.2s ease-out; }
 }
+
+/* ===== Cobrar al marcar "Atendido" ===== */
+.dialogo-cobro { width: min(94vw, 34rem); max-height: 92vh; overflow-y: auto; }
+.dialogo-cobro h2 { margin-bottom: 0.3rem; color: var(--verde-oscuro); }
+.dialogo-cobro > .texto-suave { margin-bottom: 1rem; }
+.dialogo-cobro .form-exito { margin-top: 0.5rem; }
+.dialogo-salidas { justify-content: space-between; align-items: center; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--borde); }
+.cobro-paciente { background: var(--menta); border-radius: 12px; padding: 0.6rem 0.9rem; margin-bottom: 0.4rem; }
+.casilla-efectivo { display: flex; align-items: flex-start; gap: 0.5rem; flex-wrap: wrap; font-weight: 700; margin-top: 0.4rem; cursor: pointer; }
+.casilla-efectivo input { width: 1.2rem; height: 1.2rem; margin: 0.15rem 0 0; accent-color: var(--verde); }
+.casilla-efectivo .texto-suave { font-weight: 400; font-size: 0.88rem; }
+.form .casilla-efectivo input { margin-bottom: 0; }

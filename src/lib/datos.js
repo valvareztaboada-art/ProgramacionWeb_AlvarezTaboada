@@ -9,6 +9,7 @@ import { crearClienteServidor } from '@/lib/supabase/servidor'
 import { armarListaDeDuenios } from '@/lib/duenios'
 import { textoDeEdad } from '@/lib/formato'
 import { hoyISO } from '@/lib/horarios'
+import { montosSugeridos } from '@/lib/cobros'
 
 // Si una consulta falla, mostramos el error (lo atrapa el error boundary de Next)
 function revisar({ data, error }) {
@@ -95,17 +96,32 @@ export async function obtenerTurnos({ mascotaId } = {}) {
   const supabase = await crearClienteServidor()
   let consulta = supabase
     .from('turnos')
-    .select('id, fecha, hora, motivo, estado, mascota_id, mascotas(nombre, email_duenio), especialidades(nombre)')
+    .select('id, fecha, hora, motivo, estado, sin_cargo, mascota_id, mascotas(nombre, email_duenio), especialidades(id, nombre), pagos(id)')
     .order('fecha')
     .order('hora')
   if (mascotaId) consulta = consulta.eq('mascota_id', mascotaId)
 
   const filas = await conMascota(supabase, revisar(await consulta))
-  return filas.map(({ especialidades, hora, ...t }) => ({
+  return filas.map(({ especialidades, hora, sin_cargo, pagos, ...t }) => ({
     ...t,
     hora: hora.slice(0, 5), // "10:00:00" → "10:00"
     especialidad: especialidades.nombre,
+    especialidadId: especialidades.id,
+    sinCargo: sin_cargo,
+    cobros: pagos.length, // cuántos cobros salieron de este turno
   }))
+}
+
+// Último monto cobrado por cada tipo de turno (para sugerirlo al cobrar): { consulta: 18000, ... }
+export async function obtenerMontosSugeridos() {
+  const supabase = await crearClienteServidor()
+  const filas = revisar(await supabase
+    .from('pagos')
+    .select('monto, turnos(especialidad_id)')
+    .not('turno_id', 'is', null)
+    .order('creado_en', { ascending: false })
+    .limit(200))
+  return montosSugeridos(filas.map((f) => ({ monto: f.monto, especialidadId: f.turnos?.especialidad_id })))
 }
 
 export async function obtenerVacunas({ mascotaId } = {}) {
