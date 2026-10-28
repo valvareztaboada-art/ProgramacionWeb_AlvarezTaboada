@@ -477,3 +477,17 @@ test('turno "no se cobra": la veterinaria lo marca; el cliente no puede', async 
   const cliente = await como(ANA, `update turnos set sin_cargo = false returning id`)
   assert.equal(cliente.filas.length, 0)
 })
+
+// ---------- Latido (mantener activo Supabase) ----------
+
+test('latido: cualquiera puede registrarlo, pero nadie lee ni modifica la tabla directo', async () => {
+  const antes = Number((await db.query('select veces from latido')).rows[0].veces)
+  const anonimo = await como(null, 'select public.registrar_latido() as ultimo')
+  assert.ok(anonimo.filas[0].ultimo)
+  assert.equal(Number((await db.query('select veces from latido')).rows[0].veces), antes + 1)
+
+  const leer = await como(null, 'select * from latido')
+  assert.match(leer.error, /permission denied/)
+  const tocar = await como(ANA, `update latido set veces = 0`)
+  assert.match(tocar.error, /permission denied/)
+})
