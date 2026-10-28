@@ -1,6 +1,6 @@
 # Mantiene activo el proyecto gratuito de Supabase.
 # Supabase pausa los proyectos gratis que pasan 7 días sin "suficiente actividad".
-# Una lectura chiquita no alcanzó (igual llegó el aviso de pausa), así que ahora el workflow
+# Una lectura chiquita no alcanzó (igual llegó el aviso de pausa), así que el workflow
 # ESCRIBE en la base: llama a la función registrar_latido(), que actualiza la fecha de la
 # única fila de la tabla "latido" (ver supabase/migrations/..._latido.sql).
 #
@@ -41,11 +41,33 @@ jobs:
             exit 1
           fi
 
-          # --fail hace que el paso falle (y GitHub te avise por mail) si Supabase no responde bien
-          respuesta=$(curl --silent --show-error --fail --max-time 30 -X POST \
-            "$SUPABASE_URL/rest/v1/rpc/registrar_latido" \
-            -H "apikey: $SUPABASE_PUBLISHABLE_KEY" \
+          # Se quitan espacios o saltos de línea que pudieran haber quedado al pegar los secrets
+          URL="$(printf '%s' "$SUPABASE_URL" | tr -d '[:space:]')"
+          URL="${URL%/}"
+          CLAVE="$(printf '%s' "$SUPABASE_PUBLISHABLE_KEY" | tr -d '[:space:]')"
+
+          # Guardamos el código HTTP y la respuesta: si falla, se ve el MOTIVO que da Supabase
+          # (la respuesta de Supabase nunca incluye las claves)
+          codigo=$(curl --silent --show-error --max-time 30 -o respuesta.json -w "%{http_code}" -X POST \
+            "$URL/rest/v1/rpc/registrar_latido" \
+            -H "apikey: $CLAVE" \
             -H "Content-Type: application/json" \
             -d '{}')
 
-          echo "Latido registrado: $respuesta"
+          if [ "$codigo" -lt 200 ] || [ "$codigo" -ge 300 ]; then
+            echo "::error::Supabase respondió HTTP $codigo"
+            echo "Respuesta de Supabase:"
+            cat respuesta.json
+            echo
+            # Pistas sobre el FORMATO de los secrets, sin mostrar su contenido
+            case "$URL" in https://*.supabase.co) echo "URL: formato correcto" ;; *) echo "URL: el formato NO es https://<proyecto>.supabase.co" ;; esac
+            case "$CLAVE" in
+              sb_publishable_*) echo "Clave: es la publishable (correcta)" ;;
+              sb_secret_*) echo "Clave: es la SECRET (no corresponde: usá la publishable)" ;;
+              eyJ*) echo "Clave: es la anon vieja (JWT)" ;;
+              *) echo "Clave: formato desconocido" ;;
+            esac
+            exit 1
+          fi
+
+          echo "Latido registrado: $(cat respuesta.json)"
