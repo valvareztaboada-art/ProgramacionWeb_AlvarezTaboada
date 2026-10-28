@@ -19,6 +19,7 @@ Los Route Handlers viven en `src/app/api/v1/`. Siguen los principios REST de la 
 | `POST` | `/api/v1/cobros` | veterinaria | Crea un cobro → `201`. Si viene `turnoId`, sale de ese turno atendido; con `enEfectivo: true` queda pagado | body JSON: `mascotaId`, `concepto`, `monto`, `turnoId?`, `enEfectivo?` |
 | `PATCH` | `/api/v1/turnos/:id` | veterinaria | Cambia el estado del turno o lo marca "no se cobra" | body JSON: `estado?`, `sinCargo?` |
 | `DELETE` | `/api/v1/vacunas/:id` | veterinaria | Elimina una dosis cargada por error | route param |
+| `GET` | `/api/v1/salud` | cualquiera | Chequeo de salud: `200` si el sitio y la base responden, `503` si no. Registra el latido que mantiene activo Supabase | — |
 | `POST` | `/api/v1/pagos/:id/preferencia` | cliente (sus cobros) | Crea la preferencia de Mercado Pago → `201` + `{ url }` | route param |
 | `POST` | `/api/v1/webhooks/mercadopago` | Mercado Pago (firma HMAC) | Recibe los avisos de pago | body/query de Mercado Pago |
 

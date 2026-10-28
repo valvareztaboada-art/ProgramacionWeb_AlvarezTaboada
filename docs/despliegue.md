@@ -63,6 +63,14 @@ Vercel emite el certificado SSL cuando el DNS se propaga. No es necesario para e
 | **Logs estructurados** | Vercel → Logs (buscar por `evento`) | La API escribe una línea JSON por evento ([`src/lib/api/log.js`](../src/lib/api/log.js)): `pacientes.creado`, `pacientes.eliminado`, `webhook.procesado`, `api.error_inesperado`… |
 | **Speed Insights (RUM)** | Vercel → Speed Insights | Core Web Vitals medidas en los dispositivos de las personas reales: **LCP** (carga), **INP** (interactividad; reemplazó a FID) y **CLS** (estabilidad visual) |
 
+**Chequeo de salud:** `GET /api/v1/salud` responde `200` si el sitio y la base funcionan y `503` si la base no
+responde (el detalle queda en el log `salud.base_caida`). Lo llama cron-job.org dos veces por día.
+
+**Que Supabase no pause el proyecto:** el plan gratuito pausa los proyectos con 7 días de "poca actividad".
+Una lectura diaria no alcanzó, así que ahora hay una **escritura** (`registrar_latido()`, que actualiza una fecha)
+desde dos fuentes independientes, dos veces por día: GitHub Actions
+([`mantener-supabase-activo.yml`](../.github/workflows/mantener-supabase-activo.yml)) y cron-job.org (vía `/api/v1/salud`).
+
 Los logs de las funciones serverless duran poco en el plan gratuito. Para guardarlos más tiempo se usaría un
 *Log Drain* (Datadog, Logtail, etc.). No hace falta para el proyecto.
 
