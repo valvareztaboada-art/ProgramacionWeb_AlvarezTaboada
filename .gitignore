@@ -34,3 +34,8 @@ dist-ssr
 next-env.d.ts
 AGENTS.md
 CLAUDE.md
+
+# Playwright (reportes y grabaciones de las pruebas E2E)
+test-results/
+playwright-report/
+blob-report/
