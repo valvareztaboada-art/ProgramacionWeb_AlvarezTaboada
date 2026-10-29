@@ -11,6 +11,7 @@ const menu = [
   { href: '/cliente/vacunas', label: 'Vacunas', icono: 'jeringa' },
   { href: '/cliente/estudios', label: 'Estudios', icono: 'documento' },
   { href: '/cliente/pagos', label: 'Pagos', icono: 'tarjeta' },
+  { href: '/cliente/perfil', label: 'Mi perfil', icono: 'usuario' },
 ]
 
 // Layout de la interfaz del dueño. Controla quién puede entrar (RBAC):

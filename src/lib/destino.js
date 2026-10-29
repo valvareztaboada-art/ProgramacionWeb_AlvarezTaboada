@@ -13,13 +13,19 @@ export function inicioDelRol(rol) {
   return INICIO_POR_ROL[rol] ?? INICIO_POR_ROL.cliente
 }
 
+// Único parámetro que se conserva: el servicio elegido en el catálogo (/servicios/[id] → "Sacar turno")
+const PARAMETRO_PERMITIDO = /^especialidad=[a-z_]+$/
+
 export function destinoDespuesDelLogin(siguiente, rol) {
   const inicio = inicioDelRol(rol)
   if (typeof siguiente !== 'string') return inicio
 
-  // Solo letras, números, guiones y barras: sin "//", sin ":", sin "\", sin "?" ni "#"
-  const esRutaSimple = /^\/[a-z0-9\-/]*$/i.test(siguiente) && !siguiente.includes('//')
-  const esDeSuPanel = siguiente === inicio || siguiente.startsWith(`${inicio}/`)
+  const [ruta, consulta, ...resto] = siguiente.split('?')
+  // Solo letras, números, guiones y barras: sin "//", sin ":", sin "\", sin "#"
+  const esRutaSimple = /^\/[a-z0-9\-/]*$/i.test(ruta) && !ruta.includes('//') && resto.length === 0
+  const esDeSuPanel = ruta === inicio || ruta.startsWith(`${inicio}/`)
+  if (!esRutaSimple || !esDeSuPanel) return inicio
 
-  return esRutaSimple && esDeSuPanel ? siguiente : inicio
+  // Cualquier otro parámetro se descarta (se vuelve a la página, sin él)
+  return consulta !== undefined && PARAMETRO_PERMITIDO.test(consulta) ? `${ruta}?${consulta}` : ruta
 }

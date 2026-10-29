@@ -25,6 +25,7 @@ function Footer() {
           <ul>
             <li><Link href="/login">Ingresar</Link></li>
             <li><Link href="/registro">Crear cuenta</Link></li>
+            <li><Link href="/servicios">Servicios</Link></li>
             <li><Link href="/#como-funciona">Cómo funciona</Link></li>
             <li><Link href="/#preguntas">Preguntas frecuentes</Link></li>
           </ul>

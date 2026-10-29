@@ -208,6 +208,9 @@ export default function Home() {
             </li>
           ))}
         </ul>
+        <p className="servicios-mas">
+          <Link href="/servicios" className="btn btn-primario">Ver los servicios y sacar turno</Link>
+        </p>
       </section>
 
       {/* ---------- Cómo funciona ---------- */}

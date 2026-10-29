@@ -112,3 +112,15 @@ Los valores de `supabase/config.toml` solo se aplican al entorno local. En el pr
    - *Password requirements*: **Lowercase, uppercase letters, digits and symbols**
    - *Confirm email*: activado
 2. **Authentication → Rate Limits**: revisar los límites de *sign-ups and sign-ins* por IP (por defecto, 30 cada 5 minutos).
+
+## Recuperar y cambiar la contraseña
+
+- **"¿Olvidaste tu contraseña?"** (`/recuperar`): Supabase Auth manda un enlace de un solo uso al email.
+  El mensaje en pantalla es **siempre el mismo**, exista o no una cuenta con ese email, para que nadie pueda averiguar
+  qué emails están registrados (igual que el error del login).
+- El enlace vuelve a `/auth/confirmar`, que inicia la sesión y solo acepta un destino fijo (`/nueva-contrasena`):
+  el enlace no se puede usar para redirigir a otro sitio (*open redirect*).
+- La contraseña nueva cumple las **mismas reglas que el registro** (largo, mayúscula, número, símbolo, que no sea
+  obvia) y Supabase guarda solo su hash bcrypt. Desde **Mi perfil** se puede cambiar estando con la sesión iniciada.
+- **Mi perfil** (`PATCH /api/v1/perfil`) solo cambia nombre y teléfono propios: el esquema Zod rechaza cualquier otro
+  campo (email, rol) y, además, los permisos de columna de la base no dejan modificar el rol.

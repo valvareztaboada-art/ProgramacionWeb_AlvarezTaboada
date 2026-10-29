@@ -73,14 +73,14 @@ test('"Saltar al contenido" aparece con el teclado (accesibilidad)', async ({ pa
 test('en el celular el menú se abre, navega y se cierra con Escape', async ({ page, isMobile }) => {
   test.skip(!isMobile, 'En la compu el menú se ve siempre')
   const menu = page.getByRole('button', { name: 'Menú' })
-  await expect(page.getByRole('link', { name: 'Servicios' })).toBeHidden()
+  await expect(page.getByRole('banner').getByRole('link', { name: 'Servicios', exact: true })).toBeHidden()
 
   await menu.click()
   await expect(page.getByRole('button', { name: 'Cerrar' })).toHaveAttribute('aria-expanded', 'true')
-  await expect(page.getByRole('link', { name: 'Servicios' })).toBeVisible()
+  await expect(page.getByRole('banner').getByRole('link', { name: 'Servicios', exact: true })).toBeVisible()
 
   await page.keyboard.press('Escape')
-  await expect(page.getByRole('link', { name: 'Servicios' })).toBeHidden()
+  await expect(page.getByRole('banner').getByRole('link', { name: 'Servicios', exact: true })).toBeHidden()
   await expect(menu).toBeFocused() // el foco vuelve al botón
 
   // Barra fija de abajo con lo más usado

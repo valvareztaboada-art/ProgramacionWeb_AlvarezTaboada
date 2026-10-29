@@ -11,6 +11,7 @@ const menu = [
   { href: '/veterinaria/vacunas', label: 'Vacunas', icono: 'jeringa' },
   { href: '/veterinaria/estudios', label: 'Estudios', icono: 'tubo' },
   { href: '/veterinaria/cobros', label: 'Cobros', icono: 'dinero' },
+  { href: '/veterinaria/perfil', label: 'Mi perfil', icono: 'usuario' },
 ]
 
 // Layout de la interfaz de la veterinaria. Solo entra quien tiene rol "veterinaria" (RBAC):

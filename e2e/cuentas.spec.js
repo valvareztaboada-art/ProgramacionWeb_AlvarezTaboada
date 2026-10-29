@@ -59,3 +59,21 @@ test.describe('Páginas privadas', () => {
     await expect(page).toHaveURL(/\/login\?siguiente=%2Fveterinaria%2Fpacientes$/)
   })
 })
+
+test.describe('Recuperar la contraseña', () => {
+  test('desde el login se llega al formulario, que valida el email', async ({ page }) => {
+    await page.goto('/login')
+    await page.getByRole('link', { name: '¿Olvidaste tu contraseña?' }).click()
+    await expect(page).toHaveURL(/\/recuperar$/)
+
+    await page.getByRole('button', { name: 'Mandarme el enlace' }).click()
+    await expect(page.getByText('Ingresá tu email.')).toBeVisible()
+    await expect(page.getByRole('textbox', { name: 'Email de tu cuenta' })).toBeFocused()
+  })
+
+  test('sin sesión, "contraseña nueva" pide un enlace nuevo', async ({ page }) => {
+    await page.goto('/nueva-contrasena')
+    await expect(page.getByText('El enlace venció o se abrió en otro navegador.')).toBeVisible()
+    await expect(page.getByRole('link', { name: 'Pedí uno nuevo' })).toHaveAttribute('href', '/recuperar')
+  })
+})

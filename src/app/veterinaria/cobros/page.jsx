@@ -2,6 +2,7 @@ import Link from 'next/link'
 import PageHeader from '@/components/PageHeader'
 import Badge from '@/components/Badge'
 import BotonPagoEfectivo from '@/components/BotonPagoEfectivo'
+import BotonEliminar from '@/components/BotonEliminar'
 import AtendidosSinCobrar from '@/components/AtendidosSinCobrar'
 import { obtenerPagos, obtenerEventosDePago, obtenerTurnos, obtenerMontosSugeridos } from '@/lib/datos'
 import { atendidosSinCobrar } from '@/lib/cobros'
@@ -71,7 +72,14 @@ export default async function Cobros() {
                 </td>
                 <td data-label="Acción">
                   {p.estado === 'pendiente'
-                    ? <BotonPagoEfectivo pagoId={p.id} descripcion={`"${p.concepto}" de ${p.mascota} (${pesos(p.monto)})`} />
+                    ? (
+                      <div className="acciones-cobro">
+                        <BotonPagoEfectivo pagoId={p.id} descripcion={`"${p.concepto}" de ${p.mascota} (${pesos(p.monto)})`} />
+                        <BotonEliminar url={`/api/v1/cobros/${p.id}`} metodo="PATCH" cuerpo={{ estado: 'anulado' }} verbo="Anular"
+                          que={`el cobro "${p.concepto}" de ${p.mascota} (${pesos(p.monto)})`}
+                          detalle="Usalo si se cargó por error. El cobro queda como anulado (no se borra) y el dueño/a ya no lo puede pagar." />
+                      </div>
+                    )
                     : <span className="texto-suave">—</span>}
                 </td>
               </tr>
@@ -104,7 +112,7 @@ export default async function Cobros() {
                 </thead>
                 <tbody>
                   {eventos.map((e) => (
-                    <tr key={e.id} className={e.resultado.includes('DUPLICADO') ? 'fila-alerta' : undefined}>
+                    <tr key={e.id} className={e.resultado.includes('hay que devolverlo') ? 'fila-alerta' : undefined}>
                       <td>{formatoFechaHora.format(new Date(e.recibido_en))}</td>
                       <td>{e.pago_id ? `#${e.pago_id}` : '—'}</td>
                       <td>{e.mp_payment_id}</td>

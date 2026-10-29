@@ -13,7 +13,7 @@ function Navbar() {
         <Logo claro />
         <MenuDesplegable>
           <ul className="navbar-secciones">
-            <li><Link href="/#servicios">Servicios</Link></li>
+            <li><Link href="/servicios">Servicios</Link></li>
             <li><Link href="/#como-funciona">Cómo funciona</Link></li>
             <li><Link href="/#nosotros">Nosotros</Link></li>
             <li><Link href="/#contacto">Contacto</Link></li>

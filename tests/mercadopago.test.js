@@ -134,6 +134,9 @@ test('conciliación: solo consulta cobros abiertos que ya se intentaron pagar', 
   assert.equal(necesitaConciliar({ estado: 'en_proceso', mp_preference_id: 'pref' }), true)
   assert.equal(necesitaConciliar({ estado: 'pendiente', mp_preference_id: null }), false)
   assert.equal(necesitaConciliar({ estado: 'pagado', mp_preference_id: 'pref' }), false)
+  // Anulado con un pago abierto: se revisa por si igual pagaron (habría que devolverlo)
+  assert.equal(necesitaConciliar({ estado: 'anulado', mp_preference_id: 'pref' }), true)
+  assert.equal(necesitaConciliar({ estado: 'anulado', mp_preference_id: null }), false)
 })
 
 test('conciliación: busca por external_reference y aplica los pagos del más viejo al más nuevo', async () => {

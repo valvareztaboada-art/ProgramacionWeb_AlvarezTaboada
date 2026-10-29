@@ -9,6 +9,7 @@
 import { NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { OPCIONES_DE_COOKIES } from '@/lib/supabase/cookies'
+import { log } from '@/lib/api/log'
 
 export async function proxy(request) {
   let respuesta = NextResponse.next({ request })
@@ -16,7 +17,7 @@ export async function proxy(request) {
   // Sin las variables de Supabase (ej: falta el .env.local) no hay sesión que revisar.
   // Dejamos pasar para que al menos las páginas públicas funcionen.
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY) {
-    console.warn('Faltan NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY (ver .env.example)')
+    log.warn('proxy.faltan_variables', { mensaje: 'Faltan NEXT_PUBLIC_SUPABASE_URL / NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY (ver .env.example)' })
     return respuesta
   }
 
@@ -51,8 +52,9 @@ export async function proxy(request) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     url.search = ''
-    // Para volver a esta página después de ingresar (el login valida que sea segura)
-    url.searchParams.set('siguiente', ruta)
+    // Para volver a esta página después de ingresar (el login valida que sea segura
+    // y solo conserva el parámetro "especialidad" del catálogo de servicios)
+    url.searchParams.set('siguiente', ruta + request.nextUrl.search)
     return NextResponse.redirect(url)
   }
 

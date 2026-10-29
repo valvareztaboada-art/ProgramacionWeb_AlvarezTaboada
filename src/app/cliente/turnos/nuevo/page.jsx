@@ -6,8 +6,10 @@ import { obtenerMascotas, obtenerEspecialidades, obtenerHorariosOcupados } from 
 export const metadata = { title: 'Pedir turno' }
 
 // Server Component: busca los datos en el servidor y se los pasa al formulario (Client Component)
-export default async function PedirTurno() {
-  const [mascotas, especialidades, ocupados] = await Promise.all([
+// ?especialidad=vacunacion → viene elegido el servicio (desde el catálogo /servicios)
+export default async function PedirTurno({ searchParams }) {
+  const [{ especialidad }, mascotas, especialidades, ocupados] = await Promise.all([
+    searchParams,
     obtenerMascotas(),
     obtenerEspecialidades(),
     obtenerHorariosOcupados(),
@@ -25,7 +27,8 @@ export default async function PedirTurno() {
             con tu email, vas a poder pedirle turnos desde acá.
           </p>
         ) : (
-          <FormularioTurno mascotas={mascotas} especialidades={especialidades} ocupados={ocupados} />
+          <FormularioTurno mascotas={mascotas} especialidades={especialidades} ocupados={ocupados}
+            especialidadInicial={especialidades.some((e) => e.id === especialidad) ? especialidad : ''} />
         )}
       </div>
     </>

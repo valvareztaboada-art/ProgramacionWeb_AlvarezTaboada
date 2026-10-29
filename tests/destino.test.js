@@ -26,8 +26,15 @@ test('ignora destinos peligrosos (open redirect)', () => {
   for (const malo of [
     'https://sitio-falso.com', '//sitio-falso.com', '/cliente//sitio-falso.com',
     'javascript:alert(1)', '/cliente/../veterinaria', '\\\\sitio-falso.com', '/cliente\\x',
-    '/cliente?x=1', '/cliente#a', ['/cliente/turnos'], 42,
+    '/cliente?x=1', '/cliente#a', '/cliente?a?b', ['/cliente/turnos'], 42,
   ]) {
     assert.equal(destinoDespuesDelLogin(malo, 'cliente'), '/cliente', `debería ignorar ${malo}`)
   }
+})
+
+test('conserva solo el servicio elegido en el catálogo; cualquier otro parámetro se descarta', () => {
+  assert.equal(destinoDespuesDelLogin('/cliente/turnos/nuevo?especialidad=vacunacion', 'cliente'),
+    '/cliente/turnos/nuevo?especialidad=vacunacion')
+  assert.equal(destinoDespuesDelLogin('/cliente/turnos/nuevo?x=1', 'cliente'), '/cliente/turnos/nuevo')
+  assert.equal(destinoDespuesDelLogin('/cliente/turnos/nuevo?especialidad=https://falso.com', 'cliente'), '/cliente/turnos/nuevo')
 })

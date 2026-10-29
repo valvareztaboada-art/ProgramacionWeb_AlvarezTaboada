@@ -10,6 +10,7 @@ import 'server-only'
 import { conciliarPago, necesitaConciliar } from './conciliacion.js'
 import { buscarPagosPorReferencia } from './api.js'
 import { crearClienteAdmin } from '@/lib/supabase/admin'
+import { log } from '@/lib/api/log'
 
 async function registrarPago({ pagoId, paymentId, estado, monto }) {
   const { data, error } = await crearClienteAdmin().rpc('registrar_pago_mp', {
@@ -33,7 +34,7 @@ export async function conciliarCobros(pagos) {
       try {
         return await conciliarPago(pago.id, { buscarPagos: buscarPagosPorReferencia, registrarPago })
       } catch (e) {
-        console.error(`[conciliación] Cobro ${pago.id}:`, e.message)
+        log.error('conciliacion.error', { pagoId: pago.id, mensaje: e.message })
         return false
       }
     }),

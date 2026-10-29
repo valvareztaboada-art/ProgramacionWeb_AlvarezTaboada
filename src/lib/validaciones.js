@@ -29,28 +29,53 @@ export function validarLogin({ email, password }) {
   })
 }
 
-export function validarRegistro({ nombre, email, telefono = '', password, confirmar }) {
-  const nombreLimpio = nombre.trim()
-  const digitosTelefono = telefono.replace(/\D/g, '')
+// Reglas compartidas por el registro y "Mi perfil" (así los mensajes son iguales)
+export function errorDeNombre(nombre) {
+  const limpio = nombre.trim()
+  if (limpio.length < 2 || !TIENE_LETRAS.test(limpio)) return 'Ingresá tu nombre y apellido.'
+  if (limpio.length > 80) return 'El nombre puede tener hasta 80 caracteres.'
+  return null
+}
 
+export function errorDeTelefono(telefono = '') {
+  if (telefono.trim() === '') return null // es opcional
+  const digitos = telefono.replace(/\D/g, '')
+  if (!TELEFONO_VALIDO.test(telefono) || digitos.length < 8 || digitos.length > 15) {
+    return 'Ingresá un teléfono válido (solo números, ej: 11 2345-6789).'
+  }
+  return null
+}
+
+function errorDeConfirmacion(confirmar, password) {
+  if (confirmar === '') return 'Repetí la contraseña.'
+  if (confirmar !== password) return 'Las contraseñas no coinciden.'
+  return null
+}
+
+export function validarRegistro({ nombre, email, telefono = '', password, confirmar }) {
   return sinVacios({
-    nombre:
-      nombreLimpio.length < 2 || !TIENE_LETRAS.test(nombreLimpio) ? 'Ingresá tu nombre y apellido.'
-      : nombreLimpio.length > 80 ? 'El nombre puede tener hasta 80 caracteres.'
-      : null,
+    nombre: errorDeNombre(nombre),
     email: validarEmail(email),
-    telefono:
-      telefono.trim() === '' ? null
-      : !TELEFONO_VALIDO.test(telefono) || digitosTelefono.length < 8 || digitosTelefono.length > 15
-        ? 'Ingresá un teléfono válido (solo números, ej: 11 2345-6789).'
-        : null,
+    telefono: errorDeTelefono(telefono),
     // Largo, minúscula, mayúscula, número, símbolo y que no sea obvia (ver contrasena.js)
     password: errorDeContrasena(password),
-    confirmar:
-      confirmar === '' ? 'Repetí la contraseña.'
-      : confirmar !== password ? 'Las contraseñas no coinciden.'
-      : null,
+    confirmar: errorDeConfirmacion(confirmar, password),
   })
+}
+
+// Mi perfil: nombre y teléfono
+export function validarPerfil({ nombre, telefono = '' }) {
+  return sinVacios({ nombre: errorDeNombre(nombre), telefono: errorDeTelefono(telefono) })
+}
+
+// Contraseña nueva (al recuperarla o al cambiarla desde "Mi perfil")
+export function validarNuevaContrasena({ password, confirmar }) {
+  return sinVacios({ password: errorDeContrasena(password), confirmar: errorDeConfirmacion(confirmar, password) })
+}
+
+// Recuperar la contraseña: solo el email
+export function validarRecuperar({ email }) {
+  return sinVacios({ email: validarEmail(email) })
 }
 
 // Ningún paciente tiene más de 40 años (la base controla lo mismo)

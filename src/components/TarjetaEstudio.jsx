@@ -1,11 +1,12 @@
 import Link from 'next/link'
 import Icono from './Icono'
+import BotonEliminar from './BotonEliminar'
 import { formatearTamanio, esImagen } from '@/lib/archivos'
 
 const formatoFecha = new Intl.DateTimeFormat('es-AR', { day: 'numeric', month: 'long', year: 'numeric' })
 
 // Un estudio: título, fecha, comentarios y el botón para abrir el archivo.
-// La usan el cliente (solo lectura) y la veterinaria (con el botón Editar).
+// La usan el cliente (solo lectura) y la veterinaria (con Editar y Eliminar, que pide confirmación).
 function TarjetaEstudio({ estudio, mostrarMascota = false, esVeterinaria = false, volver = '' }) {
   const fecha = formatoFecha.format(new Date(`${estudio.fecha}T00:00`))
   const editar = `/veterinaria/estudios/${estudio.id}/editar${volver ? `?volver=${encodeURIComponent(volver)}` : ''}`
@@ -32,6 +33,10 @@ function TarjetaEstudio({ estudio, mostrarMascota = false, esVeterinaria = false
             <Link href={editar} className="btn btn-chico btn-secundario" aria-label={`Editar ${estudio.titulo}`}>
               Editar
             </Link>
+          )}
+          {esVeterinaria && (
+            <BotonEliminar url={`/api/v1/estudios/${estudio.id}`} que={`el estudio "${estudio.titulo}"`}
+              detalle={estudio.archivoUrl ? 'También se borra su archivo. Esta acción no se puede deshacer.' : undefined} />
           )}
         </div>
       </div>
