@@ -1,0 +1,71 @@
+/* ===== Catálogo de servicios (/servicios y /servicios/[id]) ===== */
+
+.catalogo { background: var(--blanco); }
+.catalogo-ancho {
+  max-width: 1180px;
+  margin-inline: auto;
+  padding: 3rem max(16px, env(safe-area-inset-right, 0px)) 4.5rem max(16px, env(safe-area-inset-left, 0px));
+  display: grid;
+  gap: 2rem;
+}
+.catalogo-encabezado { display: grid; gap: 0.6rem; max-width: 62ch; }
+.catalogo-eyebrow { font-size: 0.8rem; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; color: var(--oceano-oscuro); }
+.catalogo-encabezado h1 { font-size: clamp(2.2rem, 4.5vw, 3.2rem); line-height: 1.03; color: var(--verde-oscuro); margin: 0; }
+.catalogo-encabezado p:last-child { color: var(--texto-suave); font-size: 1.06rem; }
+
+/* Filtros por especie: enlaces con forma de pastilla */
+.catalogo-filtros { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.catalogo-filtros a {
+  padding: 0.5rem 1.1rem; border-radius: 999px; border: 2px solid var(--borde);
+  font-weight: 700; color: var(--texto-suave); transition: border-color 0.2s, background 0.2s;
+}
+.catalogo-filtros a:hover { border-color: var(--verde); color: var(--verde-oscuro); }
+.catalogo-filtros a.activo { background: var(--verde); border-color: var(--verde); color: #fff; }
+.catalogo-vacio { color: var(--texto-suave); }
+
+.catalogo-lista { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.2rem; }
+.catalogo-tarjeta {
+  display: grid; grid-template-columns: 0.9fr 1.1fr; height: 100%;
+  border: 1.5px solid var(--borde); border-radius: var(--radio); overflow: hidden; background: var(--blanco);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.catalogo-tarjeta:hover { transform: translateY(-3px); box-shadow: 0 14px 30px rgba(29, 42, 34, 0.12); }
+.catalogo-foto { position: relative; min-height: 190px; background: var(--arena); }
+.catalogo-foto img { object-fit: cover; }
+.catalogo-texto { display: grid; gap: 0.6rem; align-content: start; padding: 1.3rem; }
+.catalogo-texto h2 { display: flex; align-items: center; gap: 0.5rem; font-size: 1.4rem; color: var(--verde-oscuro); margin: 0; }
+.catalogo-texto h2 svg { color: var(--toffee-texto); }
+.catalogo-texto p { color: var(--texto-suave); }
+.catalogo-ver { display: inline-flex; align-items: center; gap: 0.3rem; font-weight: 800; color: var(--verde); margin-top: auto; }
+
+/* Migas de pan */
+.migas ol { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.4rem; font-size: 0.92rem; color: var(--texto-suave); }
+.migas li + li::before { content: '›'; margin-right: 0.4rem; }
+.migas a { text-decoration: underline; text-underline-offset: 3px; }
+.migas [aria-current='page'] { color: var(--texto); font-weight: 700; }
+
+/* Detalle de un servicio */
+.servicio-detalle { display: grid; grid-template-columns: 1fr 1.1fr; gap: 2.5rem; align-items: start; }
+.servicio-detalle-foto { position: relative; aspect-ratio: 4 / 3.4; border-radius: 22px; overflow: hidden; background: var(--arena); }
+.servicio-detalle-foto img { object-fit: cover; }
+.servicio-detalle-texto { display: grid; gap: 1rem; }
+.servicio-detalle-texto h1 { display: flex; align-items: center; gap: 0.6rem; font-size: clamp(2rem, 4vw, 2.8rem); color: var(--verde-oscuro); margin: 0; }
+.servicio-detalle-texto h1 svg { color: var(--toffee-texto); }
+.servicio-detalle-texto h2 { font-size: 1.25rem; color: var(--verde-oscuro); margin: 0.5rem 0 0; }
+.servicio-detalle-resumen { font-size: 1.12rem; color: var(--texto-suave); }
+.servicio-datos { display: flex; flex-wrap: wrap; gap: 0.8rem; margin: 0; }
+.servicio-datos div { background: var(--menta); border-radius: 12px; padding: 0.6rem 1rem; }
+.servicio-datos dt { font-size: 0.8rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: var(--verde-oscuro); }
+.servicio-datos dd { margin: 0; font-weight: 700; }
+.servicio-incluye { margin: 0; padding-left: 1.2rem; display: grid; gap: 0.3rem; }
+.servicio-consejo { background: var(--crema); border-left: 5px solid var(--mandarina); border-radius: 0 12px 12px 0; padding: 0.8rem 1rem; }
+.servicio-acciones { display: flex; flex-wrap: wrap; gap: 0.7rem; margin-top: 0.5rem; }
+.servicio-otros ul { list-style: none; margin: 0.6rem 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.5rem 1.4rem; }
+
+@media (max-width: 860px) {
+  .catalogo-lista, .servicio-detalle { grid-template-columns: 1fr; }
+}
+@media (max-width: 520px) {
+  .catalogo-tarjeta { grid-template-columns: 1fr; }
+  .catalogo-foto { min-height: 170px; }
+}

@@ -11,14 +11,19 @@ Los Route Handlers viven en `src/app/api/v1/`. Siguen los principios REST de la 
 
 | Método | URL | Quién | Qué hace | Datos que recibe |
 |---|---|---|---|---|
+| `GET` | `/api/v1/servicios` | cualquiera | Catálogo de servicios que se pueden reservar | query: `especie` (opcional: Perros, Gatos, Aves, Conejos) |
+| `GET` | `/api/v1/servicios/:id` | cualquiera | Un servicio del catálogo (ej: `vacunacion`) | route param |
 | `GET` | `/api/v1/pacientes` | veterinaria | Lista los pacientes | query: `buscar`, `especie` (opcionales) |
 | `POST` | `/api/v1/pacientes` | veterinaria | Crea un paciente → `201` + `Location` | body JSON: `nombre`, `especie`, `raza`, `fechaNacimiento` (`AAAA-MM-DD`), `emailDuenio` |
 | `GET` | `/api/v1/pacientes/:id` | veterinaria | Trae un paciente | route param: `id` |
 | `PATCH` | `/api/v1/pacientes/:id` | veterinaria | Modifica **solo** los campos que vienen | route param + body JSON (al menos un campo) |
 | `DELETE` | `/api/v1/pacientes/:id` | veterinaria | Lo elimina con su historial y los archivos de sus estudios | route param |
 | `POST` | `/api/v1/cobros` | veterinaria | Crea un cobro → `201`. Si viene `turnoId`, sale de ese turno atendido; con `enEfectivo: true` queda pagado | body JSON: `mascotaId`, `concepto`, `monto`, `turnoId?`, `enEfectivo?` |
+| `PATCH` | `/api/v1/cobros/:id` | veterinaria | Anula un cobro pendiente cargado por error (`409` si ya no está pendiente) | body JSON: `{ "estado": "anulado" }` |
 | `PATCH` | `/api/v1/turnos/:id` | veterinaria | Cambia el estado del turno o lo marca "no se cobra" | body JSON: `estado?`, `sinCargo?` |
 | `DELETE` | `/api/v1/vacunas/:id` | veterinaria | Elimina una dosis cargada por error | route param |
+| `DELETE` | `/api/v1/estudios/:id` | veterinaria | Elimina un estudio y su archivo | route param |
+| `PATCH` | `/api/v1/perfil` | cliente o veterinaria | Cambia SU nombre y teléfono (el email y el rol no) | body JSON: `nombre`, `telefono` |
 | `GET` | `/api/v1/salud` | cualquiera | Chequeo de salud: `200` si el sitio y la base responden, `503` si no. Registra el latido que mantiene activo Supabase | — |
 | `POST` | `/api/v1/pagos/:id/preferencia` | cliente (sus cobros) | Crea la preferencia de Mercado Pago → `201` + `{ url }` | route param |
 | `POST` | `/api/v1/webhooks/mercadopago` | Mercado Pago (firma HMAC) | Recibe los avisos de pago | body/query de Mercado Pago |
@@ -103,7 +108,12 @@ Los Client Components llaman a la API con `fetch` (helper [`src/lib/api/cliente.
 - `AccionesTurno` → `PATCH /api/v1/turnos/:id`. Al marcar "Atendido" se abre la ventana de cobro
   (`DialogoCobrarTurno`), que usa `POST /api/v1/cobros` o, con "No se cobra", `PATCH` con `sinCargo`.
 - `FormularioCobro` → `POST /api/v1/cobros` (también desde la página de Cobros, para cobros sueltos).
-- `BotonEliminar` (genérico, con confirmación) → `DELETE /api/v1/vacunas/:id`.
+- `BotonEliminar` (genérico, siempre con ventana de confirmación) → `DELETE /api/v1/vacunas/:id`, `DELETE /api/v1/estudios/:id`
+  y "Anular" cobro (`PATCH /api/v1/cobros/:id`).
+- `FormularioPerfil` → `PATCH /api/v1/perfil`.
+
+Las páginas del catálogo (`/servicios`) son Server Components y leen los mismos datos directamente en el servidor;
+la API `/api/v1/servicios` expone ese catálogo para otros clientes (por ejemplo, una app).
 
 > La dirección vieja del webhook (`/api/webhooks/mercadopago`, sin versión) sigue funcionando como alias
 > mientras se actualiza la URL en el panel de Mercado Pago.

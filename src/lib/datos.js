@@ -10,6 +10,7 @@ import { armarListaDeDuenios } from '@/lib/duenios'
 import { textoDeEdad } from '@/lib/formato'
 import { hoyISO } from '@/lib/horarios'
 import { montosSugeridos } from '@/lib/cobros'
+import { armarServicio } from '@/lib/servicios'
 
 // Si una consulta falla, mostramos el error (lo atrapa el error boundary de Next)
 function revisar({ data, error }) {
@@ -96,7 +97,7 @@ export async function obtenerTurnos({ mascotaId } = {}) {
   const supabase = await crearClienteServidor()
   let consulta = supabase
     .from('turnos')
-    .select('id, fecha, hora, motivo, estado, sin_cargo, mascota_id, mascotas(nombre, email_duenio), especialidades(id, nombre), pagos(id)')
+    .select('id, fecha, hora, motivo, estado, sin_cargo, mascota_id, mascotas(nombre, email_duenio), especialidades(id, nombre), pagos(id, estado)')
     .order('fecha')
     .order('hora')
   if (mascotaId) consulta = consulta.eq('mascota_id', mascotaId)
@@ -108,7 +109,7 @@ export async function obtenerTurnos({ mascotaId } = {}) {
     especialidad: especialidades.nombre,
     especialidadId: especialidades.id,
     sinCargo: sin_cargo,
-    cobros: pagos.length, // cuántos cobros salieron de este turno
+    cobros: pagos.filter((p) => p.estado !== 'anulado').length, // cobros de este turno (sin contar los anulados)
   }))
 }
 
@@ -194,6 +195,24 @@ export async function obtenerPagos() {
 export async function obtenerEspecialidades() {
   const supabase = await crearClienteServidor()
   return revisar(await supabase.from('especialidades').select('id, nombre, icono, descripcion').order('orden'))
+}
+
+// "Mi perfil": nombre, email y teléfono del usuario actual (el RLS solo deja ver el propio)
+export async function obtenerPerfil() {
+  const supabase = await crearClienteServidor()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return null
+  return revisar(await supabase.from('perfiles').select('nombre, email, telefono').eq('id', user.id).single())
+}
+
+// Catálogo de servicios (público: las especialidades las puede leer cualquiera)
+export async function obtenerServicios() {
+  return (await obtenerEspecialidades()).map(armarServicio)
+}
+
+export async function obtenerServicio(id) {
+  if (!/^[a-z_]+$/.test(String(id))) return null
+  return (await obtenerServicios()).find((s) => s.id === id) ?? null
 }
 
 // Solo fecha y hora de los turnos tomados (sin datos de otras personas)

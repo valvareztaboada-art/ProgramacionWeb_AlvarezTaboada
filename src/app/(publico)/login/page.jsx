@@ -28,6 +28,9 @@ export default async function LoginPage({ searchParams }) {
         )}
         <FormularioLogin siguiente={siguiente} />
         <p className="login-alternativa">
+          <Link href="/recuperar" className="enlace">¿Olvidaste tu contraseña?</Link>
+        </p>
+        <p className="login-alternativa">
           ¿Primera vez en MICAN? <Link href="/registro" className="enlace">Creá tu cuenta</Link>
         </p>
       </div>

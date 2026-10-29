@@ -16,7 +16,8 @@ Cómo se asegura la calidad de MICAN (clase 12: testing, depuración y calidad d
 |---|---|---|---|
 | Unitarias | `node:test` | Funciones puras: validaciones, fechas, edades, vacunas, cobros, Mercado Pago, esquemas Zod, errores de la API | `npm test` |
 | Base de datos | `node:test` + PGlite | RLS (quién puede leer o escribir qué), funciones y triggers de Postgres, en una base real en memoria | `npm test` |
-| Extremo a extremo (E2E) | **Playwright** | El sitio en un navegador real (Chromium), en compu y celular: portada, formularios, redirecciones, API | `npm run test:e2e` |
+| Extremo a extremo (E2E) | **Playwright** | El sitio en un navegador real (Chromium), en compu y celular: portada, catálogo, formularios, redirecciones, API | `npm run test:e2e` |
+| Accesibilidad | **axe** (dentro de Playwright) | WCAG 2.1 A/AA en las páginas públicas: contraste, etiquetas, textos alternativos, títulos, ARIA | `npm run test:e2e` |
 | Manuales | Casos de prueba (abajo) | Flujos con sesión iniciada y pagos reales de prueba | — |
 | Exploratorias | Sesiones con objetivo (abajo) | Lo que los guiones no anticipan | — |
 
@@ -44,6 +45,13 @@ npm run test:e2e
 
 Las pruebas E2E no inician sesión: los flujos con usuario se prueban a mano (casos de abajo) y su seguridad está
 cubierta por las pruebas de base de datos (RLS).
+
+### Auditoría de accesibilidad (axe)
+
+[`e2e/accesibilidad.spec.js`](../e2e/accesibilidad.spec.js) corre axe sobre la portada, el catálogo, un servicio, ingresar,
+crear cuenta, recuperar la contraseña y el 404, en compu y celular. La primera corrida encontró **dos problemas reales de
+contraste** (texto celeste sobre azul en las opiniones: 4,1:1; texto sobre Toffee en el llamado final: 3,9:1; el mínimo
+es 4,5:1) y se corrigieron. Ahora pasa sin observaciones.
 
 ## Casos de prueba manuales
 
@@ -88,6 +96,22 @@ Formato: **precondiciones · pasos · datos de entrada · resultado esperado**.
 - **Pasos:** Editar → cargar fecha de nacimiento → Guardar.
 - **Datos:** 14/03/2022 (con la fecha de hoy 29/10/2026).
 - **Resultado esperado:** la ficha muestra "4 años" y "Nació el 14/03/2022"; una fecha futura muestra "La fecha de nacimiento no puede ser futura." y no guarda.
+
+### CP-08 · Recuperar la contraseña
+- **Precondiciones:** cuenta existente; sesión cerrada.
+- **Pasos:** Ingresar → "¿Olvidaste tu contraseña?" → email → abrir el enlace del email en el mismo navegador → elegir una contraseña nueva.
+- **Datos:** el email de la cuenta; contraseña nueva `Perro-Feliz-2026`.
+- **Resultado esperado:** "Revisá tu email" (el mismo mensaje aunque el email no tenga cuenta); el enlace lleva a "Elegí tu contraseña nueva"; al guardar entra a su panel; la contraseña vieja ya no sirve.
+
+### CP-09 · Anular un cobro cargado por error
+- **Precondiciones:** veterinaria con sesión; cobro pendiente.
+- **Pasos:** Cobros → "Anular" → "Sí, anular".
+- **Resultado esperado:** el cobro queda *Anulado* (tachado) y no suma al total pendiente; el dueño/a ya no lo puede pagar. Si estaba en "Atendidos sin cobrar", el turno vuelve a esa lista.
+
+### CP-10 · Catálogo y "Sacar turno" con el servicio elegido
+- **Precondiciones:** cliente con mascota; sesión cerrada.
+- **Pasos:** Servicios → filtro "Gatos" → Peluquería → "Sacar turno de peluquería" → ingresar.
+- **Resultado esperado:** el filtro deja solo los servicios para gatos; después del login el formulario de turno abre con "Peluquería" ya elegida.
 
 ## Reportes de bug (reales, encontrados durante el desarrollo)
 

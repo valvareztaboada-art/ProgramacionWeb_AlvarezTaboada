@@ -7,7 +7,7 @@
 // Además, los textos se SANITIZAN: se les sacan etiquetas HTML y caracteres de control.
 
 import { z } from 'zod'
-import { errorDeFechaNacimiento } from './validaciones.js'
+import { errorDeFechaNacimiento, errorDeNombre, errorDeTelefono } from './validaciones.js'
 import { hoyISO } from './horarios.js'
 import { textoDeEdad } from './formato.js'
 
@@ -125,3 +125,22 @@ export const esquemaCambiosTurno = z.strictObject({
   estado: z.enum(ESTADOS_DE_TURNO_VETERINARIA, { error: 'Ese estado no existe.' }).optional(),
   sinCargo: z.boolean().optional(),
 }).refine((cambios) => Object.keys(cambios).length > 0, { message: 'No hay cambios para guardar.' })
+
+// PATCH /api/v1/cobros/:id → por ahora, solo anular un cobro pendiente cargado por error
+export const esquemaCambiosCobro = z.strictObject({
+  estado: z.literal('anulado', { error: 'Solo se puede anular el cobro.' }),
+})
+
+// ---------- Mi perfil ----------
+
+// Convierte una regla de validaciones.js (que devuelve el mensaje o null) en una validación de Zod
+const conRegla = (regla) => (valor, contexto) => {
+  const error = regla(valor)
+  if (error) contexto.addIssue({ code: 'custom', message: error })
+}
+
+// PATCH /api/v1/perfil → nombre y teléfono propios (el email y el rol NO se cambian acá)
+export const esquemaPerfil = z.strictObject({
+  nombre: textoLimpio.superRefine(conRegla(errorDeNombre)),
+  telefono: textoLimpio.superRefine(conRegla(errorDeTelefono)).transform((t) => t || null),
+})

@@ -8,8 +8,9 @@
 import { referenciaExterna } from './preferencia.js'
 
 // Cobros que vale la pena consultar: los que no están cerrados y ya se intentaron pagar
+// Los anulados con un pago de Mercado Pago abierto también: si igual pagaron, hay que detectarlo para devolverlo
 export function necesitaConciliar(pago) {
-  return Boolean(pago.mp_preference_id) && (pago.estado === 'pendiente' || pago.estado === 'en_proceso')
+  return Boolean(pago.mp_preference_id) && ['pendiente', 'en_proceso', 'anulado'].includes(pago.estado)
 }
 
 // Aplica los pagos de Mercado Pago de un cobro, del más viejo al más nuevo

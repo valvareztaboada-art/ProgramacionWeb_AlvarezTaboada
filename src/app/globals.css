@@ -792,3 +792,7 @@ summary:focus-visible {
 .casilla-efectivo input { width: 1.2rem; height: 1.2rem; margin: 0.15rem 0 0; accent-color: var(--verde); }
 .casilla-efectivo .texto-suave { font-weight: 400; font-size: 0.88rem; }
 .form .casilla-efectivo input { margin-bottom: 0; }
+
+/* Cobros: acciones de un cobro pendiente y estado "anulado" */
+.acciones-cobro { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: flex-start; }
+.badge-anulado { background: #ebe7e0; color: #5a5650; text-decoration: line-through; }

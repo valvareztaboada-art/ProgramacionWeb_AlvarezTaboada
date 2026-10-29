@@ -6,9 +6,11 @@ Tiene **doble interfaz**:
 
 | Interfaz | Ruta | Qué incluye |
 |---|---|---|
-| Sitio público | `/` | Presentación, servicios, contacto, login |
-| Dueños de mascotas | `/cliente` | Mis mascotas, turnos, vacunas, estudios, pagos |
-| Veterinaria | `/veterinaria` | Panel, pacientes, agenda, estudios, cobros |
+| Sitio público | `/` | Portada, **catálogo de servicios** (`/servicios`, con filtro por especie y detalle de cada uno), cómo funciona, contacto, ingresar, crear cuenta y recuperar la contraseña |
+| Dueños de mascotas | `/cliente` | Mis mascotas (con edad automática), turnos (pedir y cancelar), vacunas (cuenta regresiva y aviso), estudios (ver y descargar), pagos con Mercado Pago, mi perfil |
+| Veterinaria | `/veterinaria` | Panel, pacientes (alta, edición y baja con confirmación), agenda (agendar, confirmar, atendido → cobrar en el momento), vacunas (registrar, eliminar, avisos por vencer), estudios (subir, editar, eliminar), cobros (crear, efectivo, anular, atendidos sin cobrar, avisos de Mercado Pago), mi perfil |
+
+**Sitio publicado:** https://mican-five.vercel.app
 
 ## Identidad visual
 - **Paleta:** Forrest `#44724f` (principal y panel del cliente), Ocean `#4b8299` (panel de la veterinaria), Skyline `#99bfdf`, Tangerine `#e99e26`, Toffee `#da682f` y Salsa `#db3100`, sobre crema `#f6f0e6`.
@@ -102,8 +104,11 @@ Endpoints, códigos de estado, validación con Zod y manejo de errores: ver [doc
 | `perfiles` | Nombre, email, teléfono y **rol** de cada usuario | 1 a 1 con `auth.users` |
 | `mascotas` | Pacientes | Dueño/a por `email_duenio` |
 | `especialidades` | Consulta, Vacunación, Estudios, Peluquería | — |
-| `turnos` | Día, hora, motivo, estado | `mascota_id`, `especialidad_id` |
-| `vacunas`, `estudios`, `pagos` | Historial clínico y cobros | `mascota_id` |
+| `turnos` | Día, hora, motivo, estado y si "no se cobra" | `mascota_id`, `especialidad_id` |
+| `vacunas`, `estudios` | Historial clínico (dosis con próxima fecha; estudios con archivo en Storage) | `mascota_id` |
+| `pagos` | Cobros: pendiente, en proceso, pagado, reembolsado o **anulado**; medio de pago | `mascota_id`, `turno_id` (opcional) |
+| `pagos_eventos` | Auditoría de cada aviso de Mercado Pago | `pago_id` |
+| `latido` | Una fila que se actualiza dos veces por día para que Supabase no pause el proyecto | — |
 
 Todo está en [`supabase/migrations`](supabase/migrations) y los datos de ejemplo en [`supabase/seed.sql`](supabase/seed.sql).
 
@@ -111,7 +116,9 @@ Todo está en [`supabase/migrations`](supabase/migrations) y los datos de ejempl
 | | Cliente (dueño/a) | Veterinaria |
 |---|---|---|
 | Ver mascotas, turnos, vacunas, estudios, pagos | Solo los de **sus** mascotas | Todos |
-| Cargar / editar mascotas, vacunas, estudios, pagos | ❌ | ✅ |
+| Cargar / editar / eliminar mascotas, vacunas, estudios | ❌ | ✅ (no se elimina un paciente con pagos registrados) |
+| Crear cobros, anular un cobro pendiente | ❌ | ✅ (`anular_cobro`; si igual lo pagan, queda para devolver) |
+| Editar su propio perfil (nombre y teléfono) | ✅ | ✅ |
 | Pedir turno | ✅ Para sus mascotas, a futuro, en horario de atención | ✅ |
 | Cancelar turno | ✅ Solo con **más de 24 h** (`cancelar_turno`) | ✅ Siempre |
 | Confirmar / marcar atendido o **ausente** | ❌ | ✅ |

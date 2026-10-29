@@ -23,11 +23,11 @@ import { mensajeDeError, SESION_VENCIDA } from '@/lib/supabase/mensajes'
 
 const MAXIMO_COMENTARIO = 300
 
-function FormularioTurno({ mascotas, especialidades, ocupados, paraVeterinaria = false, mascotaInicial = '' }) {
+function FormularioTurno({ mascotas, especialidades, ocupados, paraVeterinaria = false, mascotaInicial = '', especialidadInicial = '' }) {
   // Si tiene una sola mascota (o viene elegida desde la ficha del paciente), ya está seleccionada
   const vacio = {
     mascotaId: mascotaInicial || (mascotas.length === 1 ? String(mascotas[0].id) : ''),
-    especialidad: '',
+    especialidad: especialidadInicial,
     fecha: '',
     hora: '',
     comentario: '',

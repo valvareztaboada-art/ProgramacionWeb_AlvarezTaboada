@@ -491,3 +491,32 @@ test('latido: cualquiera puede registrarlo, pero nadie lee ni modifica la tabla 
   const tocar = await como(ANA, `update latido set veces = 0`)
   assert.match(tocar.error, /permission denied/)
 })
+
+// ---------- Anular cobros ----------
+
+test('anular cobro: solo la veterinaria, y solo si está pendiente', async () => {
+  const luna = await idDe('Luna')
+  const id = (await como(VET, `insert into pagos (mascota_id, concepto, monto) values (${luna}, 'Cargado por error', 999) returning id`)).filas[0].id
+
+  const cliente = await como(ANA, `select public.anular_cobro(${id})`)
+  assert.match(cliente.error, /Solo la veterinaria/)
+
+  const vet = await como(VET, `select public.anular_cobro(${id})`)
+  assert.equal(vet.error, undefined)
+  const estado = await como(VET, `select estado from pagos where id = ${id}`)
+  assert.equal(estado.filas[0].estado, 'anulado')
+
+  const otraVez = await como(VET, `select public.anular_cobro(${id})`)
+  assert.match(otraVez.error, /Solo se pueden anular cobros pendientes/)
+})
+
+test('anular cobro: si igual lo pagan por Mercado Pago, NO se acredita y queda para devolver', async () => {
+  const luna = await idDe('Luna')
+  const id = (await como(VET, `insert into pagos (mascota_id, concepto, monto) values (${luna}, 'Anulado y pagado', 1500) returning id`)).filas[0].id
+  await como(VET, `select public.anular_cobro(${id})`)
+
+  const r = await como(SERVIDOR, `select public.registrar_pago_mp(${id}, 'mp-anulado-1', 'approved', 1500) as resultado`)
+  assert.match(r.filas[0].resultado, /PAGO DE UN COBRO ANULADO \(hay que devolverlo\)/)
+  const estado = await como(VET, `select estado from pagos where id = ${id}`)
+  assert.equal(estado.filas[0].estado, 'anulado')
+})
