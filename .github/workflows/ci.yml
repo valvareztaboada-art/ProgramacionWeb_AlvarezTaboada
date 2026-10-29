@@ -58,3 +58,56 @@ jobs:
 
       - name: Compilar el proyecto (build)
         run: npm run build
+
+  # Pruebas de extremo a extremo (E2E) con Playwright: abren el sitio en un navegador real
+  # (compu y celular) y lo usan como una persona: clics, teclado, formularios, redirecciones.
+  e2e:
+    name: Pruebas E2E (Playwright)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@v4
+
+      - name: Instalar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      # El sitio necesita las dos claves PÚBLICAS de Supabase (las mismas que ve el navegador)
+      # para que el proxy pida ingresar en las páginas privadas. Se les quitan espacios
+      # o saltos de línea que pudieran haber quedado al pegarlas en los secrets.
+      - name: Preparar las variables públicas de Supabase
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          URL="$(printf '%s' "$SUPABASE_URL" | tr -d '[:space:]')"
+          echo "NEXT_PUBLIC_SUPABASE_URL=${URL%/}" >> "$GITHUB_ENV"
+          echo "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=$(printf '%s' "$SUPABASE_PUBLISHABLE_KEY" | tr -d '[:space:]')" >> "$GITHUB_ENV"
+
+      - name: Instalar el navegador (Chromium)
+        run: npx playwright install --with-deps chromium
+
+      - name: Compilar el proyecto (build)
+        run: npm run build
+
+      # Con CI=true, Playwright levanta la versión de producción (next start)
+      - name: Correr las pruebas E2E
+        run: npm run test:e2e
+
+      # Si algo falla, el reporte (con capturas y la traza para el Trace Viewer) queda para descargar
+      - name: Guardar el reporte de Playwright
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reporte-playwright
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7

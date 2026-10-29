@@ -70,15 +70,19 @@ npm run dev
 |---|---|
 | `npm run dev` | Levanta el sitio en `http://localhost:3000` |
 | `npm run lint` | Revisa el código con oxlint (incluye reglas de accesibilidad) |
-| `npm test` | Corre los tests (`tests/`) con el test runner de Node |
+| `npm test` | Pruebas unitarias y de base de datos (`tests/`) con el test runner de Node |
+| `npm run test:e2e` | Pruebas E2E con Playwright en un navegador real (`e2e/`); la primera vez: `npx playwright install chromium` |
 | `npm run build` | Compila la versión de producción |
 | `npx supabase <comando>` | CLI de Supabase (instalado como dependencia del proyecto) |
+
+## Calidad y pruebas
+Pruebas unitarias, de base de datos y E2E (Playwright), casos de prueba manuales, reportes de bug y cómo depurar: ver [docs/pruebas.md](docs/pruebas.md).
 
 ## API REST
 Endpoints, códigos de estado, validación con Zod y manejo de errores: ver [docs/api.md](docs/api.md).
 
 ## CI/CD, entornos y observabilidad
-- **CI (GitHub Actions):** en cada pull request y en cada push a `main` se ejecutan `npm audit`, lint, tests y build ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)).
+- **CI (GitHub Actions):** en cada pull request y en cada push a `main` se ejecutan `npm audit`, lint, tests, build y las pruebas E2E con Playwright ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)).
 - **CD (Vercel):** cada pull request genera un **deploy de preview** con su propia URL, y al mergear a `main` se publica en producción.
 - **Flujo de trabajo:** cada cambio se hace en una rama → pull request → CI en verde + revisar la preview → merge.
 - Entornos, variables, dominio/HTTPS, logs y Speed Insights: ver [docs/despliegue.md](docs/despliegue.md).
@@ -144,5 +148,5 @@ Autenticación, contraseñas (bcrypt con salt), sesiones, RBAC y códigos 401/40
 - [x] Pagos con Mercado Pago (Checkout Pro + webhooks firmados) — ver [docs/pruebas-mercado-pago.md](docs/pruebas-mercado-pago.md)
 - [x] API REST versionada con validación Zod y errores centralizados
 - [x] Observabilidad: logs estructurados y Speed Insights
-- [ ] Tests con Playwright
+- [x] Pruebas E2E con Playwright (en el CI, compu y celular)
 - [x] CI/CD con GitHub Actions
