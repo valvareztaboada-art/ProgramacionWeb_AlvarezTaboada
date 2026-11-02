@@ -90,5 +90,7 @@ test('en el celular el menú se abre, navega y se cierra con Escape', async ({ p
 test('una página que no existe muestra el 404', async ({ page }) => {
   const respuesta = await page.goto('/esta-pagina-no-existe')
   expect(respuesta.status()).toBe(404)
-  await expect(page.getByRole('heading', { name: '404' })).toBeVisible()
+  // El código 404 queda en la respuesta; en pantalla, un mensaje que se entienda
+  await expect(page.getByRole('heading', { name: 'No encontramos esta página' })).toBeVisible()
+  await expect(page.getByText('404')).toHaveCount(0)
 })

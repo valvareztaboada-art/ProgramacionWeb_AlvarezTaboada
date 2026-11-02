@@ -336,7 +336,7 @@ img { max-width: 100%; }
 
 /* ===== 404 ===== */
 .no-encontrado-gato { width: 240px; }
-.no-encontrado h1 { font-size: 4rem; color: var(--verde); margin: 0; }
+.no-encontrado h1 { font-size: clamp(1.8rem, 4vw, 2.6rem); color: var(--verde-oscuro); margin: 0; }
 
 /* ===== Paneles (cliente / veterinaria) ===== */
 .panel-layout {
