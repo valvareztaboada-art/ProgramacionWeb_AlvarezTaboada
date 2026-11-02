@@ -12,6 +12,9 @@ import { OPCIONES_DE_COOKIES } from '@/lib/supabase/cookies'
 import { log } from '@/lib/api/log'
 
 export async function proxy(request) {
+  // Los layouts no conocen la ruta pedida: se la pasamos en un encabezado interno.
+  // Se pisa siempre, así nadie puede mandar uno propio. Solo se usa para elegir una pantalla conocida.
+  request.headers.set('x-mican-ruta', request.nextUrl.pathname)
   let respuesta = NextResponse.next({ request })
 
   // Sin las variables de Supabase (ej: falta el .env.local) no hay sesión que revisar.

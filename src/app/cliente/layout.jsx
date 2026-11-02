@@ -1,8 +1,10 @@
+import { headers } from 'next/headers'
 import { forbidden, redirect } from 'next/navigation'
 import PanelLayout from '@/components/PanelLayout'
 import { obtenerUsuarioActual, obtenerVacunas } from '@/lib/datos'
 import { hayVacunasParaAtender } from '@/lib/vacunas'
 import { hoyISO } from '@/lib/horarios'
+import { pantallaDeVeterinaria } from '@/lib/destino'
 
 const menu = [
   { href: '/cliente', label: 'Inicio', icono: 'inicio', exacto: true },
@@ -15,10 +17,13 @@ const menu = [
 ]
 
 // Layout de la interfaz del dueño. Controla quién puede entrar (RBAC):
-// sin sesión → login (no está autenticado) · otro rol → 403 (autenticado, pero sin permiso)
+// sin sesión → login (no está autenticado).
+// La veterinaria va directo a su pantalla equivalente: la portada y el catálogo enlazan a
+// pantallas de cliente ("Turnos", "Sacar turno") y a ella no le sirve ver un aviso.
 export default async function ClienteLayout({ children }) {
   const usuario = await obtenerUsuarioActual()
   if (!usuario) redirect('/login')
+  if (usuario.rol === 'veterinaria') redirect(pantallaDeVeterinaria((await headers()).get('x-mican-ruta')))
   if (usuario.rol !== 'cliente') forbidden()
 
   // Si alguna vacuna vence en 30 días o menos (o ya venció), "Vacunas" muestra un aviso en el menú

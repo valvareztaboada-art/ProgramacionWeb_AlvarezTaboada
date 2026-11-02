@@ -80,8 +80,8 @@ Dos roles, guardados en `perfiles.rol`. **Nadie elige su rol**: todos se registr
 | Ruta | Quién puede | Sin sesión (401) | Con sesión, otro rol (403) |
 |---|---|---|---|
 | `/`, `/login`, `/registro` | Todos | — | — |
-| `/cliente/**` | `cliente` | El proxy redirige a `/login` | Página **403** (`forbidden()`) |
-| `/veterinaria/**` | `veterinaria` | El proxy redirige a `/login` | Página **403** (`forbidden()`) |
+| `/cliente/**` | `cliente` | El proxy redirige a `/login` | La veterinaria va directo a su pantalla equivalente (la portada enlaza a pantallas de cliente) |
+| `/veterinaria/**` | `veterinaria` | El proxy redirige a `/login` | HTTP **403** (`forbidden()`) con un mensaje claro y sin mostrar el número |
 | `POST /api/v1/pagos/:id/preferencia` | `cliente` (sus cobros) | `401` JSON | `403` JSON |
 | `POST /api/v1/webhooks/mercadopago` | Mercado Pago (firma HMAC) | `401` si la firma no es válida | — |
 | `/auth/confirmar` | Quien tiene el enlace del email | Lo valida Supabase | — |
@@ -124,3 +124,9 @@ Los valores de `supabase/config.toml` solo se aplican al entorno local. En el pr
   obvia) y Supabase guarda solo su hash bcrypt. Desde **Mi perfil** se puede cambiar estando con la sesión iniciada.
 - **Mi perfil** (`PATCH /api/v1/perfil`) solo cambia nombre y teléfono propios: el esquema Zod rechaza cualquier otro
   campo (email, rol) y, además, los permisos de columna de la base no dejan modificar el rol.
+
+## Mensajes de error para las personas
+
+Los códigos HTTP son para los programas, no para quien usa el sitio. Las respuestas siguen siendo correctas
+(`403`, `404`, `500`), pero en pantalla se ve un mensaje que se entiende y qué hacer a continuación:
+`forbidden.jsx`, `not-found.jsx` y `error.jsx`. Lo técnico queda en los logs del servidor.
