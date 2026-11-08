@@ -140,8 +140,9 @@ Formato: **precondiciones · pasos · datos de entrada · resultado esperado**.
 - **Evidencia:** captura de la prueba manual (CP-08).
 - **Causa:** el enlace por defecto de Supabase usa PKCE, que solo funciona en el mismo navegador donde se pidió el cambio
   (y algunos servicios de correo abren el enlace antes para revisarlo, y lo gastan).
-- **Solución:** el email lleva directo a `/nueva-contrasena` con un `token_hash` que se usa recién al guardar
-  (funciona en cualquier navegador); si el enlace no sirve, se avisa ahí mismo. Prueba E2E nueva en `e2e/cuentas.spec.js`.
+- **Solución:** el email se pide con el flujo "implicit": el enlace por defecto de Supabase vuelve a `/nueva-contrasena`
+  con la sesión en `#…`, que se usa recién al guardar (funciona en cualquier navegador). Si el enlace no sirve, se avisa
+  ahí mismo. Pruebas nuevas en `tests/recuperacion.test.js` y `e2e/cuentas.spec.js`.
 
 ### BUG-03 · El texto de la portada no aparecía (prototipo)
 - **Severidad:** alta (la portada quedaba sin título). **Prioridad:** alta.

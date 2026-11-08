@@ -1,6 +1,11 @@
 'use client'
 
 // Client Component: pide el email y Supabase Auth manda un enlace para elegir una contraseña nueva.
+//
+// Se pide con el flujo "implicit" (no PKCE): así el enlace del email por defecto de Supabase vuelve a
+// /nueva-contrasena con la sesión de recuperación en el enlace (#access_token=…) y funciona en
+// CUALQUIER navegador o celular. Con PKCE (el que usa el resto del sitio) solo funcionaba en el mismo
+// navegador donde se pidió el cambio. Este cliente no guarda nada: solo manda el pedido.
 // Seguridad: el mensaje es SIEMPRE el mismo, exista o no una cuenta con ese email
 // (así nadie puede averiguar qué emails están registrados).
 
@@ -8,7 +13,7 @@ import { useState } from 'react'
 import Campo from './Campo'
 import { useFormulario } from '@/hooks/useFormulario'
 import { validarRecuperar } from '@/lib/validaciones'
-import { crearClienteNavegador } from '@/lib/supabase/navegador'
+import { createClient } from '@supabase/supabase-js'
 import { mensajeDeError } from '@/lib/supabase/mensajes'
 
 function FormularioRecuperar() {
@@ -24,8 +29,11 @@ function FormularioRecuperar() {
 
     setCargando(true)
     try {
-      const { error } = await crearClienteNavegador().auth.resetPasswordForEmail(datos.email.trim().toLowerCase(), {
-        // El enlace del email lleva directo a elegir la contraseña nueva (ver la plantilla en docs/seguridad.md)
+      const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY, {
+        auth: { flowType: 'implicit', persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
+      })
+      const { error } = await supabase.auth.resetPasswordForEmail(datos.email.trim().toLowerCase(), {
+        // El enlace del email lleva directo a elegir la contraseña nueva
         redirectTo: `${window.location.origin}/nueva-contrasena`,
       })
       // Solo mostramos errores que no revelan nada (ej: demasiados pedidos o sin conexión)

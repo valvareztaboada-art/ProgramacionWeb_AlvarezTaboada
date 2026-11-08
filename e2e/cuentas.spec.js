@@ -73,8 +73,26 @@ test.describe('Recuperar la contraseña', () => {
 
   test('sin enlace ni sesión, "contraseña nueva" pide un enlace nuevo', async ({ page }) => {
     await page.goto('/nueva-contrasena')
-    await expect(page.getByText('El enlace venció o ya se usó.')).toBeVisible()
+    await expect(page.getByText('El enlace venció o ya se usó')).toBeVisible()
     await expect(page.getByRole('link', { name: 'Pedí uno nuevo' })).toHaveAttribute('href', '/recuperar')
+  })
+
+  test('con el enlace del email por defecto (#access_token) se ve el formulario y el enlace se borra de la barra', async ({ page }) => {
+    await page.goto('/nueva-contrasena#access_token=token-de-prueba&refresh_token=otro-de-prueba&type=recovery')
+    await expect(page.getByLabel('Contraseña nueva', { exact: true })).toBeVisible()
+    await expect(page).toHaveURL(/\/nueva-contrasena$/) // ya no tiene el "#access_token=…"
+
+    await page.getByLabel('Contraseña nueva', { exact: true }).fill('Perro-Feliz-2026')
+    await page.getByLabel('Repetí la contraseña nueva').fill('Perro-Feliz-2026')
+    await page.getByRole('button', { name: 'Guardar contraseña' }).click()
+    // El token es de prueba: Supabase lo rechaza y se avisa ahí mismo
+    await expect(page.getByRole('link', { name: 'Pedir un enlace nuevo' })).toBeVisible()
+  })
+
+  test('si Supabase avisa que el enlace venció, se dice claro (sin rebotar al login)', async ({ page }) => {
+    await page.goto('/nueva-contrasena#error=access_denied&error_code=otp_expired&error_description=Email+link+is+invalid')
+    await expect(page.getByText('El enlace venció o ya se usó')).toBeVisible()
+    await expect(page).toHaveURL(/\/nueva-contrasena$/)
   })
 
   test('con el enlace del email se ve el formulario; si el enlace no sirve, lo avisa ahí mismo', async ({ page }) => {
