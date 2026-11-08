@@ -19,8 +19,8 @@ import { mensajeDeError } from '@/lib/supabase/mensajes'
 const VACIO = { password: '', confirmar: '' }
 
 // destino: si viene, después de guardar va ahí (recuperación); si no, muestra "Listo" (perfil)
-// enlace: { tokenHash } o { codigo } del email de "Olvidé mi contraseña". Se usa recién al guardar
-// (así, si el servicio de correo abre el enlace antes para revisarlo, no lo gasta).
+// enlace: lo que trae el email de "Olvidé mi contraseña": { accessToken, refreshToken } (email por defecto),
+// { tokenHash } (plantilla propia) o { codigo } (PKCE). Se usa recién al guardar.
 function FormularioContrasena({ destino, enlace = null }) {
   const { datos, errores, handleChange, validarAlEnviar, reiniciar } = useFormulario(VACIO, validarNuevaContrasena)
   const [cargando, setCargando] = useState(false)
@@ -42,9 +42,11 @@ function FormularioContrasena({ destino, enlace = null }) {
 
       // 1. Con el enlace del email se inicia la sesión de recuperación
       if (!sesionLista.current) {
-        const { error } = enlace.tokenHash
-          ? await supabase.auth.verifyOtp({ token_hash: enlace.tokenHash, type: 'recovery' })
-          : await supabase.auth.exchangeCodeForSession(enlace.codigo)
+        const { error } = enlace.accessToken
+          ? await supabase.auth.setSession({ access_token: enlace.accessToken, refresh_token: enlace.refreshToken })
+          : enlace.tokenHash
+            ? await supabase.auth.verifyOtp({ token_hash: enlace.tokenHash, type: 'recovery' })
+            : await supabase.auth.exchangeCodeForSession(enlace.codigo)
         if (error) {
           setEnlaceVencido(true)
           return
