@@ -25,8 +25,8 @@ function FormularioRecuperar() {
     setCargando(true)
     try {
       const { error } = await crearClienteNavegador().auth.resetPasswordForEmail(datos.email.trim().toLowerCase(), {
-        // El enlace del email vuelve a /auth/confirmar, que inicia la sesión y lleva a elegir la contraseña
-        redirectTo: `${window.location.origin}/auth/confirmar?siguiente=/nueva-contrasena`,
+        // El enlace del email lleva directo a elegir la contraseña nueva (ver la plantilla en docs/seguridad.md)
+        redirectTo: `${window.location.origin}/nueva-contrasena`,
       })
       // Solo mostramos errores que no revelan nada (ej: demasiados pedidos o sin conexión)
       if (error && error.code !== 'user_not_found') {

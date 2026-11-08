@@ -118,8 +118,23 @@ Los valores de `supabase/config.toml` solo se aplican al entorno local. En el pr
 - **"¿Olvidaste tu contraseña?"** (`/recuperar`): Supabase Auth manda un enlace de un solo uso al email.
   El mensaje en pantalla es **siempre el mismo**, exista o no una cuenta con ese email, para que nadie pueda averiguar
   qué emails están registrados (igual que el error del login).
-- El enlace vuelve a `/auth/confirmar`, que inicia la sesión y solo acepta un destino fijo (`/nueva-contrasena`):
-  el enlace no se puede usar para redirigir a otro sitio (*open redirect*).
+- El enlace lleva **directo a `/nueva-contrasena`**, que muestra el formulario. El enlace se usa recién al tocar
+  "Guardar contraseña" (`verifyOtp` con `token_hash`), no al abrir la página. Así:
+  - funciona en **cualquier navegador o celular** (el método por defecto, PKCE, solo sirve en el mismo navegador
+    donde se pidió el cambio: fue el error encontrado en las pruebas manuales);
+  - si el servicio de correo **abre el enlace antes para revisarlo**, no lo gasta;
+  - si venció o ya se usó, se avisa ahí mismo con un botón para pedir otro.
+- El destino del enlace (`redirectTo`) tiene que estar en *Redirect URLs* de Supabase (`https://*.vercel.app/**`
+  y `http://localhost:3000/**`): no se puede usar para redirigir a otro sitio.
+
+### Plantilla del email "Reset Password" (Supabase → Authentication → Emails → Reset Password)
+
+```html
+<h2>Elegí tu contraseña nueva</h2>
+<p>Pediste cambiar la contraseña de tu cuenta de MICAN.</p>
+<p><a href="{{ .RedirectTo }}?token_hash={{ .TokenHash }}&type=recovery">Elegir mi contraseña nueva</a></p>
+<p>El enlace sirve una sola vez y vence en una hora. Si no lo pediste, ignorá este email.</p>
+```
 - La contraseña nueva cumple las **mismas reglas que el registro** (largo, mayúscula, número, símbolo, que no sea
   obvia) y Supabase guarda solo su hash bcrypt. Desde **Mi perfil** se puede cambiar estando con la sesión iniciada.
 - **Mi perfil** (`PATCH /api/v1/perfil`) solo cambia nombre y teléfono propios: el esquema Zod rechaza cualquier otro
