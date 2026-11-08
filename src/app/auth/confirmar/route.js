@@ -1,5 +1,5 @@
-// Route Handler: acá vuelve el usuario cuando toca el enlace del email de confirmación
-// (o el de "Olvidé mi contraseña").
+// Route Handler: acá vuelve el usuario cuando toca el enlace del email de confirmación de la cuenta.
+// (El de "Olvidé mi contraseña" va directo a /nueva-contrasena.)
 // Supabase manda un "code" en la URL; lo cambiamos por una sesión (se guardan las cookies)
 // y lo mandamos a su panel.
 
@@ -25,11 +25,6 @@ export async function GET(request) {
 
   if (error) {
     return NextResponse.redirect(`${origin}/login?error=confirmacion`)
-  }
-  // "Olvidé mi contraseña": el enlace trae ?siguiente=/nueva-contrasena.
-  // Es el ÚNICO destino aceptado (así el enlace no se puede usar para redirigir a otro sitio).
-  if (searchParams.get('siguiente') === '/nueva-contrasena') {
-    return NextResponse.redirect(`${origin}/nueva-contrasena`)
   }
   return NextResponse.redirect(`${origin}/cliente`)
 }

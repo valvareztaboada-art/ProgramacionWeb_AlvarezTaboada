@@ -99,7 +99,7 @@ Formato: **precondiciones · pasos · datos de entrada · resultado esperado**.
 
 ### CP-08 · Recuperar la contraseña
 - **Precondiciones:** cuenta existente; sesión cerrada.
-- **Pasos:** Ingresar → "¿Olvidaste tu contraseña?" → email → abrir el enlace del email en el mismo navegador → elegir una contraseña nueva.
+- **Pasos:** Ingresar → "¿Olvidaste tu contraseña?" → email → abrir el enlace del email (desde la compu o el celular) → elegir una contraseña nueva.
 - **Datos:** el email de la cuenta; contraseña nueva `Perro-Feliz-2026`.
 - **Resultado esperado:** "Revisá tu email" (el mismo mensaje aunque el email no tenga cuenta); el enlace lleva a "Elegí tu contraseña nueva"; al guardar entra a su panel; la contraseña vieja ya no sirve.
 
@@ -132,6 +132,16 @@ Formato: **precondiciones · pasos · datos de entrada · resultado esperado**.
   Supabase y el *formato* de los secrets sin revelarlos.
 - **Causa:** caracteres invisibles (espacios/saltos de línea) en los secrets pegados en GitHub.
 - **Solución:** el workflow limpia los valores antes de usarlos. Con la rama corregida, Run workflow dio ✅.
+
+### BUG-04 · El enlace de "Olvidé mi contraseña" mandaba al login con un error
+- **Severidad:** alta (no se podía recuperar la cuenta). **Prioridad:** alta.
+- **Pasos para reproducir:** Ingresar → "¿Olvidaste tu contraseña?" → email → abrir el enlace del email.
+- **Resultado esperado:** se abre "Elegí tu contraseña nueva". **Resultado real:** el login con "El enlace de confirmación no es válido o ya venció".
+- **Evidencia:** captura de la prueba manual (CP-08).
+- **Causa:** el enlace por defecto de Supabase usa PKCE, que solo funciona en el mismo navegador donde se pidió el cambio
+  (y algunos servicios de correo abren el enlace antes para revisarlo, y lo gastan).
+- **Solución:** el email lleva directo a `/nueva-contrasena` con un `token_hash` que se usa recién al guardar
+  (funciona en cualquier navegador); si el enlace no sirve, se avisa ahí mismo. Prueba E2E nueva en `e2e/cuentas.spec.js`.
 
 ### BUG-03 · El texto de la portada no aparecía (prototipo)
 - **Severidad:** alta (la portada quedaba sin título). **Prioridad:** alta.

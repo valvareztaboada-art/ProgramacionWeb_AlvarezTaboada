@@ -6,7 +6,8 @@
 //   · "Mi perfil", para cambiarla estando con la sesión iniciada
 // Exige lo mismo que el registro: largo, mayúscula, número, símbolo y que no sea obvia.
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import Campo from './Campo'
 import MedidorContrasena from './MedidorContrasena'
@@ -18,11 +19,15 @@ import { mensajeDeError } from '@/lib/supabase/mensajes'
 const VACIO = { password: '', confirmar: '' }
 
 // destino: si viene, después de guardar va ahí (recuperación); si no, muestra "Listo" (perfil)
-function FormularioContrasena({ destino }) {
+// enlace: { tokenHash } o { codigo } del email de "Olvidé mi contraseña". Se usa recién al guardar
+// (así, si el servicio de correo abre el enlace antes para revisarlo, no lo gasta).
+function FormularioContrasena({ destino, enlace = null }) {
   const { datos, errores, handleChange, validarAlEnviar, reiniciar } = useFormulario(VACIO, validarNuevaContrasena)
   const [cargando, setCargando] = useState(false)
   const [listo, setListo] = useState(false)
   const [errorGeneral, setErrorGeneral] = useState('')
+  const [enlaceVencido, setEnlaceVencido] = useState(false)
+  const sesionLista = useRef(!enlace) // el enlace se usa una sola vez
   const router = useRouter()
 
   async function handleSubmit(e) {
@@ -33,7 +38,22 @@ function FormularioContrasena({ destino }) {
 
     setCargando(true)
     try {
-      const { error } = await crearClienteNavegador().auth.updateUser({ password: datos.password })
+      const supabase = crearClienteNavegador()
+
+      // 1. Con el enlace del email se inicia la sesión de recuperación
+      if (!sesionLista.current) {
+        const { error } = enlace.tokenHash
+          ? await supabase.auth.verifyOtp({ token_hash: enlace.tokenHash, type: 'recovery' })
+          : await supabase.auth.exchangeCodeForSession(enlace.codigo)
+        if (error) {
+          setEnlaceVencido(true)
+          return
+        }
+        sesionLista.current = true
+      }
+
+      // 2. Se guarda la contraseña nueva
+      const { error } = await supabase.auth.updateUser({ password: datos.password })
       if (error) {
         setErrorGeneral(error.code === 'same_password'
           ? 'Esa es tu contraseña actual. Elegí una distinta.'
@@ -52,6 +72,15 @@ function FormularioContrasena({ destino }) {
     } finally {
       setCargando(false)
     }
+  }
+
+  if (enlaceVencido) {
+    return (
+      <div className="form-exito" role="alert">
+        <p>El enlace venció o ya se usó (cada enlace sirve una sola vez y dura una hora).</p>
+        <Link href="/recuperar" className="btn btn-primario">Pedir un enlace nuevo</Link>
+      </div>
+    )
   }
 
   return (

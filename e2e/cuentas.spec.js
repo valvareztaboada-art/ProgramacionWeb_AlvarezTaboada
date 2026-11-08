@@ -71,9 +71,22 @@ test.describe('Recuperar la contraseña', () => {
     await expect(page.getByRole('textbox', { name: 'Email de tu cuenta' })).toBeFocused()
   })
 
-  test('sin sesión, "contraseña nueva" pide un enlace nuevo', async ({ page }) => {
+  test('sin enlace ni sesión, "contraseña nueva" pide un enlace nuevo', async ({ page }) => {
     await page.goto('/nueva-contrasena')
-    await expect(page.getByText('El enlace venció o se abrió en otro navegador.')).toBeVisible()
+    await expect(page.getByText('El enlace venció o ya se usó.')).toBeVisible()
     await expect(page.getByRole('link', { name: 'Pedí uno nuevo' })).toHaveAttribute('href', '/recuperar')
+  })
+
+  test('con el enlace del email se ve el formulario; si el enlace no sirve, lo avisa ahí mismo', async ({ page }) => {
+    await page.goto('/nueva-contrasena?token_hash=enlace-de-prueba-invalido&type=recovery')
+    // El enlace no se usa al abrir la página (por si el correo lo abre antes): primero se ve el formulario
+    await expect(page.getByRole('heading', { name: 'Elegí tu contraseña nueva' })).toBeVisible()
+    await page.getByLabel('Contraseña nueva', { exact: true }).fill('Perro-Feliz-2026')
+    await page.getByLabel('Repetí la contraseña nueva').fill('Perro-Feliz-2026')
+    await page.getByRole('button', { name: 'Guardar contraseña' }).click()
+
+    await expect(page.getByText('El enlace venció o ya se usó')).toBeVisible()
+    await expect(page.getByRole('link', { name: 'Pedir un enlace nuevo' })).toHaveAttribute('href', '/recuperar')
+    await expect(page).toHaveURL(/\/nueva-contrasena/) // no rebota al login
   })
 })
