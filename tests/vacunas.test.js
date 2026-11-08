@@ -4,7 +4,7 @@ import {
   opcionesDeVacuna, calcularProximaDosis, lineaDeVacuna, sumarDias, diasEntre,
   estadoDeProxima, proximasVacunas, hayVacunasParaAtender, vacunasAVencer, vacunasYaAvisadas, mensajeDeAviso,
 } from '../src/lib/vacunas.js'
-import { validarVacuna } from '../src/lib/validaciones.js'
+import { validarVacuna, validarVacunasAntiguas } from '../src/lib/validaciones.js'
 
 const HOY = '2026-10-17'
 
@@ -105,4 +105,35 @@ test('mensaje de aviso: saluda por el nombre y dice la vacuna y la fecha', () =>
 
 test('mensaje de aviso: si no hay nombre (solo el email), saluda igual', () => {
   assert.match(mensajeDeAviso({ nombreDuenio: 'ana@mail.com', mascota: 'Luna', vacuna: 'X', fechaTexto: 'hoy' }).texto, /^¡Hola! /)
+})
+
+test('vacunas anteriores: valida cada fila (vacuna y fecha pasada) y no pide próxima dosis', () => {
+  const ok = validarVacunasAntiguas([
+    { tipo: 'polivalente_1', fecha: '2025-03-01' },
+    { tipo: 'otra', nombre: 'Leptospirosis', fecha: '2025-04-10' },
+  ], HOY)
+  assert.equal(ok.hayErrores, false)
+
+  const mal = validarVacunasAntiguas([
+    { tipo: '', fecha: '2025-03-01' },
+    { tipo: 'rabia_anual', fecha: '2099-01-01' },
+  ], HOY)
+  assert.equal(mal.hayErrores, true)
+  assert.ok(mal.filas[0].tipo)
+  assert.ok(mal.filas[1].fecha)
+  assert.equal(validarVacunasAntiguas([], HOY).general, 'Agregá al menos una vacuna.')
+})
+
+test('una vacuna antigua (sin próxima) como última dosis no genera avisos en rojo', () => {
+  const vacunas = [
+    // Serie de cachorro cargada como antecedente: ninguna tiene próxima dosis
+    { id: 1, mascotaId: 9, linea: 'polivalente', fecha_aplicacion: '2025-03-01', proxima_dosis: null, antigua: true },
+    { id: 2, mascotaId: 9, linea: 'polivalente', fecha_aplicacion: '2025-03-15', proxima_dosis: null, antigua: true },
+  ]
+  assert.deepEqual(proximasVacunas(vacunas, HOY), [])
+  assert.equal(hayVacunasParaAtender(vacunas, HOY), false)
+
+  // Si después se registra una dosis normal, vuelve a haber próxima (y avisos)
+  const conRefuerzo = [...vacunas, { id: 3, mascotaId: 9, linea: 'polivalente', fecha_aplicacion: HOY, proxima_dosis: '2027-10-17' }]
+  assert.equal(proximasVacunas(conRefuerzo, HOY).length, 1)
 })

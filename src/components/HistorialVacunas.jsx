@@ -17,6 +17,7 @@ function HistorialVacunas({ vacunas, mostrarMascota = false, esVeterinaria = fal
           <li key={v.id} className="card vacuna-dosis">
             <div>
               <strong>{v.vacuna}</strong>
+              {v.antigua && <> <span className="badge badge-antecedente">Antecedente</span></>}
               <p className="texto-suave">
                 {mostrarMascota && <>{v.mascota} · </>}Aplicada el {formatearFecha(v.fecha_aplicacion)}
               </p>
@@ -24,7 +25,7 @@ function HistorialVacunas({ vacunas, mostrarMascota = false, esVeterinaria = fal
             </div>
             <div className="lista-item-derecha">
               <span className="vacuna-proxima">
-                {v.proxima_dosis ? <>Próxima: <strong>{corta(v.proxima_dosis)}</strong></> : 'Sin refuerzo'}
+                {v.proxima_dosis ? <>Próxima: <strong>{corta(v.proxima_dosis)}</strong></> : v.antigua ? 'Cargada como antecedente' : 'Sin refuerzo'}
               </span>
               {esVeterinaria && (
                 <BotonEliminar url={`/api/v1/vacunas/${v.id}`} que={`la dosis de ${v.vacuna} del ${corta(v.fecha_aplicacion)}`}

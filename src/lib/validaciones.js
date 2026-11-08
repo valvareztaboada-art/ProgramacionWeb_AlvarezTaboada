@@ -189,3 +189,16 @@ export function validarVacuna({ tipo, nombre = '', fecha, proxima = '', notas = 
     notas: notas.length > 500 ? 'Las notas pueden tener hasta 500 caracteres.' : null,
   })
 }
+
+// Vacunas anteriores (antecedentes): varias de una vez, cada una con vacuna y fecha.
+// Mismas reglas que una vacuna normal, pero sin próxima dosis (no generan avisos).
+// Devuelve { general?, filas: [{ ...errores de cada fila }] } y "hayErrores".
+export function validarVacunasAntiguas(filas, hoy) {
+  const errores = filas.map((f) => validarVacuna({ ...f, proxima: '' }, hoy))
+  const hayErrores = errores.some((e) => Object.keys(e).length > 0)
+  return {
+    general: filas.length === 0 ? 'Agregá al menos una vacuna.' : null,
+    filas: errores,
+    hayErrores: hayErrores || filas.length === 0,
+  }
+}

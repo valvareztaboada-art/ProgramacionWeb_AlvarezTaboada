@@ -80,9 +80,14 @@ function FichaMascota({ mascota, turnos, vacunas, estudios, volver, esVeterinari
           <div className="ficha-seccion-encabezado">
             <h2>Vacunas</h2>
             {esVeterinaria && (
-              <Link href={`/veterinaria/pacientes/${mascota.id}/vacunas/nueva`} className="btn btn-chico btn-primario">
-                + Registrar vacuna
-              </Link>
+              <div className="ficha-botones">
+                <Link href={`/veterinaria/pacientes/${mascota.id}/vacunas/nueva`} className="btn btn-chico btn-primario">
+                  + Registrar vacuna
+                </Link>
+                <Link href={`/veterinaria/pacientes/${mascota.id}/vacunas/anteriores`} className="btn btn-chico btn-secundario">
+                  Cargar vacunas anteriores
+                </Link>
+              </div>
             )}
           </div>
           <ProximasVacunas proximas={proximasVacunas(vacunas, hoyISO())} mostrarMascota={false}
