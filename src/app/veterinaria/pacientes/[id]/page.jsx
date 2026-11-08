@@ -9,9 +9,9 @@ export async function generateMetadata({ params }) {
   return { title: mascota?.nombre ?? 'Paciente' }
 }
 
-// ?editado=1 llega después de guardar cambios en /editar
+// ?editado=1 llega después de guardar cambios en /editar · ?antiguas=3 después de cargar vacunas anteriores
 export default async function FichaPaciente({ params, searchParams }) {
-  const [{ id }, { editado }] = await Promise.all([params, searchParams])
+  const [{ id }, { editado, antiguas }] = await Promise.all([params, searchParams])
   const mascota = await obtenerMascota(id)
 
   if (!mascota) notFound()
@@ -32,7 +32,9 @@ export default async function FichaPaciente({ params, searchParams }) {
       volver={{ href: '/veterinaria/pacientes', label: 'Pacientes' }}
       esVeterinaria
       montos={montos}
-      aviso={editado ? 'Listo, los datos quedaron guardados.' : null}
+      aviso={editado ? 'Listo, los datos quedaron guardados.'
+        : /^\d+$/.test(antiguas ?? '') ? `Listo, se cargaron ${antiguas === '1' ? '1 vacuna anterior' : `${Number(antiguas)} vacunas anteriores`} al historial.`
+        : null}
     />
   )
 }

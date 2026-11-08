@@ -520,3 +520,22 @@ test('anular cobro: si igual lo pagan por Mercado Pago, NO se acredita y queda p
   const estado = await como(VET, `select estado from pagos where id = ${id}`)
   assert.equal(estado.filas[0].estado, 'anulado')
 })
+
+// ---------- Vacunas anteriores (antecedentes) ----------
+
+test('vacunas anteriores: se cargan varias como antecedente y la base no deja que tengan próxima dosis', async () => {
+  const rocco = await idDe('Rocco')
+  const ok = await como(VET, `insert into vacunas (mascota_id, vacuna, tipo, linea, fecha_aplicacion, antigua) values
+    (${rocco}, 'Polivalente · 1ª dosis', 'polivalente_1', 'polivalente', '2020-11-01', true),
+    (${rocco}, 'Polivalente · 2ª dosis', 'polivalente_2', 'polivalente', '2020-11-15', true) returning antigua, proxima_dosis`)
+  assert.equal(ok.filas.length, 2)
+  assert.ok(ok.filas.every((f) => f.antigua === true && f.proxima_dosis === null))
+
+  const conProxima = await como(VET, `insert into vacunas (mascota_id, vacuna, linea, fecha_aplicacion, proxima_dosis, antigua)
+    values (${rocco}, 'Rabia', 'rabia', '2020-12-01', '2021-12-01', true)`)
+  assert.match(conProxima.error, /vacunas_antigua_sin_proxima_check/)
+
+  const cliente = await como(ANA, `insert into vacunas (mascota_id, vacuna, linea, fecha_aplicacion, antigua)
+    values (${await idDe('Luna')}, 'Rabia', 'rabia', '2020-12-01', true)`)
+  assert.ok(cliente.error)
+})

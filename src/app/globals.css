@@ -796,3 +796,13 @@ summary:focus-visible {
 /* Cobros: acciones de un cobro pendiente y estado "anulado" */
 .acciones-cobro { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: flex-start; }
 .badge-anulado { background: #ebe7e0; color: #5a5650; text-decoration: line-through; }
+
+/* Vacunas anteriores (antecedentes) */
+.ficha-botones { display: flex; flex-wrap: wrap; gap: 0.4rem; justify-content: flex-end; }
+.badge-antecedente { background: var(--arena); color: var(--texto-suave); }
+.aviso-informativo { background: var(--menta); color: var(--verde-oscuro); border-radius: 12px; padding: 0.7rem 1rem; margin-bottom: 1rem; }
+.filas-vacunas { list-style: none; margin: 0; padding: 0; display: grid; gap: 1rem; }
+.fila-vacuna fieldset { border: 1.5px solid var(--borde); border-radius: var(--radio); padding: 0.9rem 1rem 1rem; margin: 0; display: grid; gap: 0.4rem; }
+.fila-vacuna legend { font-family: var(--fuente-titulos); font-weight: 700; color: var(--verde-oscuro); padding: 0 0.4rem; }
+.fila-vacuna .boton-enlace { justify-self: start; color: #a3261b; }
+.btn-agregar-fila { justify-self: start; margin-top: 0.8rem; }
